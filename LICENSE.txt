@@ -1,0 +1,2 @@
+Tileset: https://cluly.itch.io/gameboy-style-dark-forest-tileset by: Cluly
+Inner/Inner_demon sprite: https://gibbongl.itch.io/8-directional-gameboy-character-template by: GibbonGL

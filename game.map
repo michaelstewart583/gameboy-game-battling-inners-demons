@@ -1,0 +1,145 @@
+SUMMARY:
+	ROM0: 12859 bytes used / 19909 free
+
+ROM0 bank #0:
+	EMPTY: $0000-$003f ($0040 bytes)
+	SECTION: $0040-$0040 ($0001 byte) ["vblank_interrupt"]
+	SECTION: $0041-$00a9 ($0069 bytes) ["main"]
+	         $0041 = main
+	         $0046 = restart_game
+	         $0046 = restart_game.wait_vblank_u7
+	         $0054 = start_screen_loop
+	         $005b = start_level_1.wait_vblank_u8
+	         $005b = start_level_1
+	         $0078 = start_level_2
+	         $0078 = start_level_2.wait_vblank_u9
+	         $0092 = game_loop
+	EMPTY: $00aa-$00ff ($0056 bytes)
+	SECTION: $0100-$014f ($0050 bytes) ["header"]
+	         $0100 = entrypoint
+	SECTION: $0150-$0450 ($0301 bytes) ["inner_demon"]
+	         $0150 = init_inner_demons
+	         $015c = init_inner_demons.loop
+	         $01b1 = move_inner_demons
+	         $01b6 = move_inner_demons.loop
+	         $01d0 = move_inner_demons.inner_x_is_inline_with_demon
+	         $01d5 = move_inner_demons.inner_x_is_right_of_demon
+	         $01da = move_inner_demons.inner_x_left_of_demon
+	         $01df = move_inner_demons.done_x
+	         $01f6 = move_inner_demons.inner_y_is_inline_with_demon
+	         $01fb = move_inner_demons.inner_y_below_demon
+	         $0200 = move_inner_demons.inner_y_is_above_demon
+	         $0205 = move_inner_demons.done_y
+	         $0206 = move_inner_demons.x_movement
+	         $0215 = move_inner_demons.move_entity_right_call
+	         $0220 = move_inner_demons.right_location_loop
+	         $0250 = move_inner_demons.start_walking_right
+	         $0274 = move_inner_demons.done_right
+	         $029d = move_inner_demons.move_entity_left_call
+	         $02a9 = move_inner_demons.left_location_loop
+	         $02d8 = move_inner_demons.start_walking_left
+	         $02fc = move_inner_demons.done_left
+	         $0325 = move_inner_demons.y_movement
+	         $0334 = move_inner_demons.move_entity_up_call
+	         $0340 = move_inner_demons.up_location_loop
+	         $036f = move_inner_demons.start_walking_up
+	         $0393 = move_inner_demons.done_up
+	         $03bc = move_inner_demons.move_entity_down_call
+	         $03c8 = move_inner_demons.down_location_loop
+	         $03f7 = move_inner_demons.start_walking_down
+	         $041b = move_inner_demons.done_down
+	         $0444 = move_inner_demons.done_y_movement
+	         $0450 = move_inner_demons.done
+	SECTION: $0451-$0745 ($02f5 bytes) ["background_processes"]
+	         $0451 = print_text
+	         $0455 = print_text.write_letter
+	         $0468 = print_text.space
+	         $046b = print_text.letter_printed
+	         $046f = print_text.done
+	         $0473 = print_text.scroll
+	         $0485 = init_start_screen
+	         $049a = init_start_screen.init_oam_u1
+	         $04a6 = init_start_screen.load_tile_u2
+	         $04b4 = init_start_screen.load_tile_u3
+	         $04c2 = init_start_screen.load_tile_u4
+	         $04fc = init_start_screen.lost_game
+	         $0508 = init_start_screen.won_game
+	         $0514 = init_start_screen.done
+	         $0515 = init_level_1
+	         $052d = init_level_1.load_tile_u5
+	         $0550 = init_level_2
+	         $0568 = init_level_2.load_tile_u6
+	         $0586 = move_screen
+	         $059e = move_screen.on_left_side
+	         $05a9 = move_screen.fix_screen_left
+	         $05ba = move_screen.left_loop
+	         $05c5 = move_screen.left_location_loop
+	         $05e4 = move_screen.on_right_side
+	         $05ef = move_screen.fix_screen_right
+	         $0600 = move_screen.right_loop
+	         $060a = move_screen.right_location_loop
+	         $0625 = move_screen.check_up_down
+	         $0632 = move_screen.on_top
+	         $063d = move_screen.fix_screen_up
+	         $064e = move_screen.up_loop
+	         $0659 = move_screen.up_location_loop
+	         $0678 = move_screen.on_bottom
+	         $0683 = move_screen.fix_screen_bottom
+	         $0694 = move_screen.bottom_loop
+	         $069f = move_screen.down_location_loop
+	         $06bb = move_screen.done
+	         $06bc = update_game_state
+	         $06c4 = update_game_state.level_beat
+	         $06d4 = update_game_state.done
+	         $06d5 = handle_interaction
+	         $06de = handle_interaction.loop
+	         $06f6 = handle_interaction.done_check
+	         $0701 = handle_interaction.lost_game
+	         $0709 = handle_interaction.done
+	         $070a = check_for_start
+	         $0724 = update_visuals
+	         $072c = update_visuals.loop
+	         $0735 = YOU_WIN_TEXT_LOCATION
+	         $073d = YOU_LOSE_TEXT_LOCATION
+	SECTION: $0746-$09fe ($02b9 bytes) ["inner"]
+	         $0746 = init_inner
+	         $079c = update_inner
+	         $07a8 = update_inner.poll_right
+	         $07b3 = update_inner.right
+	         $07c3 = update_inner.right_location_loop
+	         $07f3 = update_inner.start_walking_right
+	         $0817 = update_inner.done_right
+	         $0840 = update_inner.left_poll
+	         $0848 = update_inner.left
+	         $0859 = update_inner.left_location_loop
+	         $0888 = update_inner.start_walking_left
+	         $08ac = update_inner.done_left
+	         $08d2 = update_inner.up_poll
+	         $08da = update_inner.up
+	         $08eb = update_inner.up_location_loop
+	         $091a = update_inner.start_walking_up
+	         $093e = update_inner.done_up
+	         $0967 = update_inner.down_poll
+	         $096f = update_inner.down
+	         $0980 = update_inner.down_location_loop
+	         $09af = update_inner.start_walking_down
+	         $09d3 = update_inner.done_down
+	         $09f9 = update_inner.done
+	SECTION: $09ff-$0ad0 ($00d2 bytes) ["sword"]
+	         $09ff = init_sword
+	         $0a19 = update_sword
+	         $0a51 = update_sword.poll_right
+	         $0a59 = update_sword.right
+	         $0a69 = update_sword.poll_left
+	         $0a71 = update_sword.left
+	         $0a7e = update_sword.poll_up
+	         $0a86 = update_sword.up
+	         $0a91 = update_sword.poll_down
+	         $0a99 = update_sword.down
+	         $0aa4 = update_sword.swing_sword
+	         $0ab4 = update_sword.swing_over
+	         $0acb = update_sword.done
+	EMPTY: $0ad1-$27ff ($1d2f bytes)
+	SECTION: $2800-$4fff ($2800 bytes) ["graphics_data"]
+	EMPTY: $5000-$7fff ($3000 bytes)
+	TOTAL EMPTY: $4dc5 bytes
