@@ -152,7 +152,6 @@ move_inner_demons:
     ld hl, INNER_DEMONS_START_ADDRESS
     ;looping through all inner demons
     .loop
-        halt
         push af
         push hl
         calculate_inner_demon_movement_vector

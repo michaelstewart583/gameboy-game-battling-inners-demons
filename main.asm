@@ -57,6 +57,7 @@ start_level_2:
     call init_inner
     call init_inner_demons
     call init_sword
+    call update_visuals
     call init_level_2
     jp game_loop
 
@@ -65,6 +66,10 @@ game_loop:
     call move_inner_demons
     call move_screen
     call update_sword
+    halt
+    halt
+    halt
+    halt
     call update_visuals
     call handle_interaction
     call update_game_state

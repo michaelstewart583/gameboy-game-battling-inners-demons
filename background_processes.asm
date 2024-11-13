@@ -11,21 +11,24 @@ section "vblank_interrupt", rom0[$0040]
 
 def TILES_COUNT                     equ (384)
 def BYTES_PER_TILE                  equ (16)
-def TILES_BYTE_SIZE                 equ (TILES_COUNT * BYTES_PER_TILE)
+def TILESET_BYTE_SIZE                 equ (TILES_COUNT * BYTES_PER_TILE)
 
 def TILEMAPS_COUNT                  equ (4)
 def BYTES_PER_TILEMAP               equ (1024)
 def TILEMAPS_BYTE_SIZE              equ (TILEMAPS_COUNT * BYTES_PER_TILEMAP)
 
-def GRAPHICS_DATA_SIZE              equ (TILES_BYTE_SIZE + (TILEMAPS_BYTE_SIZE * TILEMAPS_COUNT))
+def GRAPHICS_DATA_SIZE              equ (TILESET_BYTE_SIZE + TILEMAPS_BYTE_SIZE)
 def GRAPHICS_DATA_ADDRESS_END       equ ($8000)
 def TILESET_ADDRESS_START           equ (GRAPHICS_DATA_ADDRESS_END - GRAPHICS_DATA_SIZE)
-def WINDOW_ADDRESS_START            equ (TILESET_ADDRESS_START + TILES_BYTE_SIZE)
+def WINDOW_ADDRESS_START            equ (TILESET_ADDRESS_START + TILESET_BYTE_SIZE)
 def START_SCREEN_ADDRESS_START      equ (WINDOW_ADDRESS_START + BYTES_PER_TILEMAP)
 def LEVEL_1_ADDRESS_START           equ (START_SCREEN_ADDRESS_START + BYTES_PER_TILEMAP)
 def LEVEL_2_ADDRESS_START           equ (LEVEL_1_ADDRESS_START + BYTES_PER_TILEMAP)
-def VRAM_TILEMAP_ADDRESS_START      equ (_VRAM8000 + TILES_BYTE_SIZE) ;where tilemaps would actually start in VRAM
+def VRAM_TILEMAP_ADDRESS_START      equ (_VRAM8000 + TILESET_BYTE_SIZE) ;where tilemaps would actually start in VRAM
 def VRAM_WINDOW_ADDRESS_START       equ (VRAM_TILEMAP_ADDRESS_START + BYTES_PER_TILEMAP)
+
+def SCREEN_X_RAM                    rb 1
+def SCREEN_Y_RAM                    rb 1
 
 def LEFT_SIDE_OF_SCREEN             equ (53)
 def RIGHT_SIDE_OF_SCREEN            equ (106)
@@ -121,66 +124,66 @@ endm
 
 macro FixScreenLeft
     ld hl, INNER_SPRITE_0_ADDRESS
-    ld bc, ENTITY_SIZE
+    ld de, ENTITY_SIZE
     ld c, NUM_INNER_DEMONS
     inc c
     .left_loop
-        MoveEntityLeftNoAnimation INNER_MOVEMENT_AMOUNT
-        add hl, bc
+        MoveEntityRightNoAnimation INNER_MOVEMENT_AMOUNT
+        add hl, de
         dec c
         jp nz, .left_loop
 
     ld a, [rSCX]
     sub 2
-    ld [rSCX], a
+    ld [SCREEN_X_RAM], a
 endm
 
 macro FixScreenRight
     ld hl, INNER_SPRITE_0_ADDRESS
-    ld bc, ENTITY_SIZE
+    ld de, ENTITY_SIZE
     ld c, NUM_INNER_DEMONS
     inc c
     .right_loop
-        MoveEntityRightNoAnimation INNER_MOVEMENT_AMOUNT
-        add hl, bc
+        MoveEntityLeftNoAnimation INNER_MOVEMENT_AMOUNT
+        add hl, de
         dec c
         jp nz, .right_loop
 
     ld a, [rSCX]
     add 2
-    ld [rSCX], a
+    ld [SCREEN_X_RAM], a
 endm
 
 macro FixScreenUp
     ld hl, INNER_SPRITE_0_ADDRESS
-    ld bc, ENTITY_SIZE
+    ld de, ENTITY_SIZE
     ld c, NUM_INNER_DEMONS
     inc c
     .up_loop
-        MoveEntityUpNoAnimation INNER_MOVEMENT_AMOUNT
-        add hl, bc
+        MoveEntityDownNoAnimation INNER_MOVEMENT_AMOUNT
+        add hl, de
         dec c
         jp nz, .up_loop
 
-    ld a, [rSCY]
+    ld a, [SCREEN_Y_RAM]
     sub 2
-    ld [rSCY], a
+    ld [SCREEN_Y_RAM], a
 endm
 
 macro FixScreenBottom
     ld hl, INNER_SPRITE_0_ADDRESS
-    ld bc, ENTITY_SIZE
+    ld de, ENTITY_SIZE
     ld c, NUM_INNER_DEMONS
     inc c
     .bottom_loop
-        MoveEntityDownNoAnimation INNER_MOVEMENT_AMOUNT
-        add hl, bc
+        MoveEntityUpNoAnimation INNER_MOVEMENT_AMOUNT
+        add hl, de
         dec c
         jp nz, .bottom_loop
 
-    ld a, [rSCY]
+    ld a, [SCREEN_Y_RAM]
     add 2
-    ld [rSCY], a
+    ld [SCREEN_Y_RAM], a
 endm
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -264,6 +267,9 @@ init_start_screen:
     copy [rSCX], 0
     copy [rSCY], 0
 
+    copy [SCREEN_X_RAM], [rSCX]
+    copy [SCREEN_Y_RAM], [rSCY]
+
     ; set the graphics parameters and turn back LCD on
     ld a, LCDCF_ON | LCDCF_WIN9C00 | LCDCF_WINON | LCDCF_BG8800 | LCDCF_BG9800 | LCDCF_OBJON | LCDCF_OBJ8 | LCDCF_BGON
     ld [rLCDC], a
@@ -317,8 +323,11 @@ init_level_1:
     ld a, 120
     ld [rWY], a
 
-    ld a, 50
-    ld [rSCY], a
+    copy [rSCX], 0
+    copy [rSCY], 50
+
+    copy [SCREEN_X_RAM], [rSCX]
+    copy [SCREEN_Y_RAM], [rSCY]
 
     ; set the graphics parameters and turn back LCD on
     ld a, LCDCF_ON | LCDCF_WIN9C00 | LCDCF_BG8800 | LCDCF_BG9800 | LCDCF_OBJON | LCDCF_OBJ8 | LCDCF_BGON
@@ -349,6 +358,12 @@ init_level_2:
     ld a, 120
     ld [rWY], a
 
+    copy [rSCX], 0
+    copy [rSCY], 50
+    
+    copy [SCREEN_X_RAM], [rSCX]
+    copy [SCREEN_Y_RAM], [rSCY]
+
     ; set the graphics parameters and turn back LCD on
     ld a, LCDCF_ON | LCDCF_WIN9C00 | LCDCF_BG8800 | LCDCF_BG9800 | LCDCF_OBJON | LCDCF_OBJ8 | LCDCF_BGON
     ld [rLCDC], a
@@ -357,7 +372,6 @@ init_level_2:
 
 
 move_screen:
-    halt
     ld a, [IS_WALKING]
     and %00001111
     xor %00001111
@@ -367,6 +381,7 @@ move_screen:
     jp c, .on_left_side
     cp a, RIGHT_SIDE_OF_SCREEN
     jp nc, .on_right_side
+    jp .check_up_down
 
     .on_left_side
         ld a, [FACING_DIRECTION]
@@ -374,7 +389,7 @@ move_screen:
         jp z, .fix_screen_left
         jp .check_up_down
         .fix_screen_left
-            ld a, [rSCX]
+            ld a, [SCREEN_X_RAM]
             cp a, 2
             jp c, .check_up_down
             FixScreenLeft
@@ -385,7 +400,7 @@ move_screen:
         jp z, .fix_screen_right
         jp .check_up_down
         .fix_screen_right
-            ld a, [rSCX]
+            ld a, [SCREEN_X_RAM]
             cp a, 93
             jp nc, .check_up_down
             FixScreenRight
@@ -396,6 +411,7 @@ move_screen:
     jp c, .on_top
     cp a, BOTTOM_OF_SCREEN
     jp nc, .on_bottom
+    jp .done
 
     .on_top
         ld a, [FACING_DIRECTION]
@@ -403,7 +419,7 @@ move_screen:
         jp z, .fix_screen_up
         jp .done
         .fix_screen_up
-            ld a, [rSCY]
+            ld a, [SCREEN_Y_RAM]
             cp a, 2
             jp c, .done
             FixScreenUp
@@ -415,7 +431,7 @@ move_screen:
         jp z, .fix_screen_bottom
         jp .done
         .fix_screen_bottom
-            ld a, [rSCY]
+            ld a, [SCREEN_Y_RAM]
             cp a, 113
             jp nc, .done
             FixScreenBottom
@@ -490,14 +506,17 @@ check_for_start:
 
 update_visuals:
     ld hl, SWORD_SPRITE_ADDRESS_OAM
-    ld bc, SWORD_SPRITE_ADDRESS
+    ld de, SWORD_SPRITE_ADDRESS
     ld c, TOTAL_SPRITE_SIZE
     .loop
-        copy [hl], [bc]
+        copy [hl], [de]
         inc hl
-        inc bc
+        inc de
         dec c
         jp nz, .loop
+
+    copy [rSCX], [SCREEN_X_RAM]
+    copy [rSCY], [SCREEN_Y_RAM]
     ret
     
 YOU_WIN_TEXT_LOCATION:

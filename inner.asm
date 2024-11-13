@@ -76,7 +76,6 @@ init_inner:
 
 update_inner:
     ;updates the location and sprite tiles of inner to 
-    halt
     ld hl, INNER_SPRITE_0_ADDRESS
     ;start dpad polling
     ld a, P1F_GET_DPAD

@@ -33,6 +33,7 @@ endm
 macro MoveEntityRightNoAnimation
     ;store the memory address of the top left sprite address
     push hl
+    push bc
     ld bc, OAMA_X
     add hl, bc
     ld a, 0
@@ -50,6 +51,7 @@ macro MoveEntityRightNoAnimation
         jp nz, .right_location_loop
 
     ;get the entity address
+    pop bc
     pop hl
 endm
 
@@ -243,6 +245,8 @@ macro MoveEntityUp
     ld a, [hl]
     cp a, SPRITE_UP_MOVEMENT
     jp c, .start_walking_up
+    cp a, SPRITE_SIDE_MOVEMENT
+    jp nc, .start_walking_up
     add 2
     and %00001010
     ld [hl], a
@@ -270,14 +274,14 @@ macro MoveEntityUp
         push hl
         ld bc, OAMA_TILEID
         add hl, bc
-        copy_or_movement [hl], SPRITE_UP_MOVEMENT
+        copy_xor_movement [hl], SPRITE_UP_MOVEMENT
         ld bc, sizeof_OAM_ATTRS
         add hl, bc
-        copy_or_movement [hl], SPRITE_UP_MOVEMENT + 1
+        copy_xor_movement [hl], SPRITE_UP_MOVEMENT + 1
         add hl, bc
-        copy_or_movement [hl], SPRITE_UP_MOVEMENT + SPRITE_BOTTOM_LEFT_TILE_NUM
+        copy_xor_movement [hl], SPRITE_UP_MOVEMENT + SPRITE_BOTTOM_LEFT_TILE_NUM
         add hl, bc       
-        copy_or_movement [hl], SPRITE_UP_MOVEMENT + SPRITE_BOTTOM_LEFT_TILE_NUM + 1
+        copy_xor_movement [hl], SPRITE_UP_MOVEMENT + SPRITE_BOTTOM_LEFT_TILE_NUM + 1
 
     .done_up
         pop hl
@@ -383,3 +387,5 @@ macro MoveEntityDown
     pop hl
     pop bc
 endm
+
+check_down
