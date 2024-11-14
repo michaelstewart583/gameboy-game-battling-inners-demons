@@ -146,7 +146,7 @@ macro MoveEntityLeftNoAnimation
 endm
 
 macro MoveEntityLeft
-    ;moves the entity with its top left sprite at memory address [hl] two pixels to the left
+    ;moves the entity with its top left sprite at memory address [hl] the argument's pixels to the left
     push bc
     MoveEntityLeftNoAnimation \1
     push hl
@@ -234,8 +234,56 @@ macro MoveEntityUpNoAnimation
     pop hl
 endm
 
+macro CheckUpMoveValidity
+    ;sets (a) equal to 1 if moving the entity with sprite 0 stored at 
+    ;[hl] up by one pixel would result in a collision with a wall and sets 
+    ;(a) equal to 0 otherwise
+    push hl
+    push de
+    push bc
+    ;first get the row start tile index
+    ld de, OAMA_Y
+    add hl, de
+    ld a, [hl]
+    srl a
+    srl a
+    srl a ;a is now the entity's row number if it moved up by 1
+    ld b, 0
+    ld c, a ;bc is now floor(y_pos/8)
+    ld a, 0 ;counter
+    ld hl, MAP_WALL_STORAGE_START
+    .add_row_times_32_to_map_wall_storage_start_loop
+        add hl, bc
+        inc a
+        cp a, 32
+        jp nz, .add_row_times_32_to_map_wall_storage_start_loop
+    ;now get column offset
+    ld de, OAMA_X
+    add hl, de
+    ld a, [hl]
+    dec a ;moving a up by 1 pixel
+    ld d, 0
+    ld e, a ;de is now the column offset
+
+    ;now add column offset to row start wall map index to get final wall map index
+    add hl, de
+
+    pop bc
+    pop de
+    ld a, [hl] ;now load wall status at wall map index, if a = 1 if there is a wall, a = 0 else
+    bit a, e ;if bit is zero, set zero flag
+    jp z, .done_checking_up_move_validity
+    inc hl ;checking top right column
+    ld a, [hl]
+    .done_checking_up_move_validity
+    pop hl
+endm
+
 macro MoveEntityUp
-    ;moves the entity with its top left sprite at memory address [hl] two pixels up
+    CheckUpMoveValidity
+    cp a, 1
+    jp z, .done_up
+    ;moves the entity with its top left sprite at memory address [hl] the argument's pixels up
     push bc
     MoveEntityUpNoAnimation \1
     push hl
@@ -325,7 +373,7 @@ macro MoveEntityDownNoAnimation
 endm
 
 macro MoveEntityDown
-    ;moves the entity with its top left sprite at memory address [hl] two pixels down
+    ;moves the entity with its top left sprite at memory address [hl] [arg1] pixels down
     push bc
     MoveEntityDownNoAnimation \1
     push hl
@@ -388,4 +436,5 @@ macro MoveEntityDown
     pop bc
 endm
 
-check_down
+
+

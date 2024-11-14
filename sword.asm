@@ -6,11 +6,6 @@ include "utils.inc"
 
 section "sword", rom0
 
-def SWORD_SWINGING equ(1)
-def LAST_SWORD_ANIMATION_SPRITE equ(95)
-
-def SWORDF rb 1
-
 macro SwingSword
     ;Puts sword at top left of inner
     copy [SWORD_SPRITE_ADDRESS + OAMA_X], [INNER_SPRITE_0_ADDRESS + OAMA_X]

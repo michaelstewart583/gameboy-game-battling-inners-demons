@@ -9,47 +9,6 @@ section "vblank_interrupt", rom0[$0040]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-def TILES_COUNT                     equ (384)
-def BYTES_PER_TILE                  equ (16)
-def TILESET_BYTE_SIZE                 equ (TILES_COUNT * BYTES_PER_TILE)
-
-def TILEMAPS_COUNT                  equ (4)
-def BYTES_PER_TILEMAP               equ (1024)
-def TILEMAPS_BYTE_SIZE              equ (TILEMAPS_COUNT * BYTES_PER_TILEMAP)
-
-def GRAPHICS_DATA_SIZE              equ (TILESET_BYTE_SIZE + TILEMAPS_BYTE_SIZE)
-def GRAPHICS_DATA_ADDRESS_END       equ ($8000)
-def TILESET_ADDRESS_START           equ (GRAPHICS_DATA_ADDRESS_END - GRAPHICS_DATA_SIZE)
-def WINDOW_ADDRESS_START            equ (TILESET_ADDRESS_START + TILESET_BYTE_SIZE)
-def START_SCREEN_ADDRESS_START      equ (WINDOW_ADDRESS_START + BYTES_PER_TILEMAP)
-def LEVEL_1_ADDRESS_START           equ (START_SCREEN_ADDRESS_START + BYTES_PER_TILEMAP)
-def LEVEL_2_ADDRESS_START           equ (LEVEL_1_ADDRESS_START + BYTES_PER_TILEMAP)
-def VRAM_TILEMAP_ADDRESS_START      equ (_VRAM8000 + TILESET_BYTE_SIZE) ;where tilemaps would actually start in VRAM
-def VRAM_WINDOW_ADDRESS_START       equ (VRAM_TILEMAP_ADDRESS_START + BYTES_PER_TILEMAP)
-
-def SCREEN_X_RAM                    rb 1
-def SCREEN_Y_RAM                    rb 1
-
-def LEFT_SIDE_OF_SCREEN             equ (53)
-def RIGHT_SIDE_OF_SCREEN            equ (106)
-def TOP_OF_SCREEN                   equ (48)
-def BOTTOM_OF_SCREEN                equ (96)
-def FAR_RIGHT_OF_SCREEN             equ (160)
-
-def LEVEL_FLAGS                     rb 1
-def ON_LEVEL_1                      equ(%00000001)
-def ON_LEVEL_2                      equ(%00000010)
-def LOST_GAME                       equ(%10000000)
-def WON_GAME                        equ(%01000000)
-
-;Text printing constants
-def WHITE_SPACE                     equ($C3)
-def START_OF_ALPHABET_IN_TILESET    equ($61)
-def NEW_LINE_OFFSET                 equ($20)
-def TEXT_ON_WINDOW                  equ($9C02)
-def ASCII_WHITE_SPACE               equ(20)
-def START_OF_ALPHABET_HEX           equ($41)
-
 macro LoadTileSetIntoVRAM
     ld de, TILESET_ADDRESS_START
     ld hl, _VRAM8000
@@ -454,35 +413,100 @@ update_game_state:
     .done
     ret
 
-;Checks if Inner Collides with an Inner Demon
-handle_interaction:
-    ld a, [INNER_SPRITE_0_ADDRESS + OAMA_Y]
-    ld b, a
+macro CheckCollisionNotRight
+    copy b, [INNER_SPRITE_0_ADDRESS + OAMA_Y]
     ld hl, INNER_DEMONS_START_ADDRESS + OAMA_Y
     ld c, NUM_INNER_DEMONS
-    .loop
-        ld a, [hl]
-        cp a, b
-        jp nz, .done_check
 
+    .loop_not_right
         push hl
-        ld a, [INNER_SPRITE_0_ADDRESS + OAMA_X]
-        ld b, a
+        ;Check if Inner is abover Inner Demon
+        ld a, [hl]
+        sub a, SPRITES_WIDTH
+        cp a, b
+        jp nc, .done_check_not_right
+        ;Checks if Inner is below Inner Demon
+        add a, SPRITES_WIDTH * 2
+        cp a, b
+        jp c, .done_check_not_right
+        ;Check horizontal position
+        copy b, [INNER_SPRITE_0_ADDRESS + OAMA_X]
         ld de, OAMA_X
         add hl, de
-        ld a, [hl]
-        cp a, b
-        jp z, .lost_game
-        ld a, [INNER_SPRITE_0_ADDRESS + OAMA_X]
-        ld b, a
-        pop hl
 
-        .done_check
-            ld de, ENTITY_SIZE
-            add hl, de
-            dec c
-            jp nz, .loop
-            jp .done
+        ;Check if Inner is to the right of Inner Demon
+        ld a, [hl]
+        sub a, SPRITES_WIDTH
+        cp a, b
+        jp nc, .done_check_not_right
+        ;Checks if Inner is to the left of Inner Demon
+        add a, SPRITES_WIDTH * 2
+        cp a, b
+        jp c, .done_check_not_right
+
+        jp .lost_game
+
+        .done_check_not_right
+        copy b, [INNER_SPRITE_0_ADDRESS + OAMA_Y]
+        pop hl
+        ld de, ENTITY_SIZE
+        add hl, de
+        dec c
+        jp nz, .loop_not_right
+endm
+
+macro CheckCollisionRight
+    copy b, [INNER_SPRITE_1_ADDRESS + OAMA_Y]
+    ld hl, INNER_DEMONS_START_ADDRESS + sizeof_OAM_ATTRS + OAMA_Y
+    ld c, NUM_INNER_DEMONS
+
+    .loop_right
+        push hl
+        ;Check if Inner is abover Inner Demon
+        ld a, [hl]
+        sub a, SPRITES_WIDTH
+        cp a, b
+        jp nc, .done_check_right
+        ;Checks if Inner is below Inner Demon
+        add a, SPRITES_WIDTH * 2
+        cp a, b
+        jp c, .done_check_right
+        ;Check horizontal position
+        copy b, [INNER_SPRITE_1_ADDRESS + OAMA_X]
+        ld de, OAMA_X
+        add hl, de
+
+        ;Check if Inner is to the right of Inner Demon
+        ld a, [hl]
+        sub a, SPRITES_WIDTH
+        cp a, b
+        jp nc, .done_check_right
+        ;Checks if Inner is to the left of Inner Demon
+        add a, SPRITES_WIDTH * 2
+        cp a, b
+        jp c, .done_check_right
+
+        jp .lost_game
+
+        .done_check_right
+        copy b, [INNER_SPRITE_1_ADDRESS + OAMA_Y]
+        pop hl
+        ld de, ENTITY_SIZE
+        add hl, de
+        dec c
+        jp nz, .loop_right
+endm
+
+;Checks if Inner Collides with an Inner Demon
+handle_interaction:
+    ld a, [INNER_SPRITE_0_ADDRESS + OAMA_FLAGS]
+    and OAMF_XFLIP
+    jp nz, .right
+    CheckCollisionNotRight
+    jp .done
+    .right
+        CheckCollisionRight
+        jp .done
 
     .lost_game
         copy [LEVEL_FLAGS], LOST_GAME
@@ -517,6 +541,8 @@ update_visuals:
 
     copy [rSCX], [SCREEN_X_RAM]
     copy [rSCY], [SCREEN_Y_RAM]
+
+    .done
     ret
     
 YOU_WIN_TEXT_LOCATION:

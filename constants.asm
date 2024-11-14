@@ -1,0 +1,103 @@
+def NUM_SPRITES_IN_ENTITY equ (4)
+def ENTITY_SIZE equ(NUM_SPRITES_IN_ENTITY * sizeof_OAM_ATTRS)
+def NUM_INNER_DEMONS equ (3)
+def TOTAL_SPRITE_SIZE equ((5 + (NUM_INNER_DEMONS * NUM_SPRITES_IN_ENTITY)) * sizeof_OAM_ATTRS)
+
+rsset _OAMRAM
+
+def SWORD_SPRITE_ADDRESS_OAM rb sizeof_OAM_ATTRS
+def INNER_SPRITE_0_ADDRESS_OAM rb sizeof_OAM_ATTRS
+def INNER_SPRITE_1_ADDRESS_OAM rb sizeof_OAM_ATTRS
+def INNER_SPRITE_2_ADDRESS_OAM rb sizeof_OAM_ATTRS
+def INNER_SPRITE_3_ADDRESS_OAM rb sizeof_OAM_ATTRS
+def INNER_DEMONS_START_ADDRESS_OAM rb (NUM_INNER_DEMONS * ENTITY_SIZE)
+
+
+rsset _RAM
+
+def SWORD_SPRITE_ADDRESS rb sizeof_OAM_ATTRS
+def INNER_SPRITE_0_ADDRESS rb sizeof_OAM_ATTRS
+def INNER_SPRITE_1_ADDRESS rb sizeof_OAM_ATTRS
+def INNER_SPRITE_2_ADDRESS rb sizeof_OAM_ATTRS
+def INNER_SPRITE_3_ADDRESS rb sizeof_OAM_ATTRS
+def INNER_DEMONS_START_ADDRESS rb (NUM_INNER_DEMONS * ENTITY_SIZE)
+def SCREEN_X rb 1
+def SCREEN_Y rb 1
+
+def FACING_DIRECTION rb 1
+def IS_WALKING rb 1
+
+def SPRITE_TOP_LEFT_X equ (16)
+def SPRITE_TOP_LEFT_Y equ (84)
+def SPRITE_TILE_WIDTH equ (8)
+def SPRITE_TOP_LEFT_TILE_NUM equ (0)
+def SPRITE_BOTTOM_LEFT_TILE_NUM equ (16)
+def SPRITE_DOWN_MOVEMENT equ (0)
+def SPRITE_UP_MOVEMENT equ (8)
+def SPRITE_SIDE_MOVEMENT equ (64)
+
+def INNER_MOVEMENT_AMOUNT equ (2)
+
+def SPRITE_ATTRIBUTE_SIZE equ (1)
+
+def INNER_DEMONS_SPAWN_POINT_X equ (50)
+def INNER_DEMONS_SPAWN_POINT_Y equ (20)
+
+def INNER_DEMEON_MOVEMENT_AMOUNT equ(1)
+
+def INNER_DEMONS_SPAWN_Y_OFFSET equ(50)
+def INNER_DEMONS_SPAWN_X_OFFSET equ(50)
+
+def TILES_COUNT                     equ (384)
+def BYTES_PER_TILE                  equ (16)
+def TILESET_BYTE_SIZE                 equ (TILES_COUNT * BYTES_PER_TILE)
+
+def TILEMAPS_COUNT                  equ (4)
+def BYTES_PER_TILEMAP               equ (1024)
+def TILEMAPS_BYTE_SIZE              equ (TILEMAPS_COUNT * BYTES_PER_TILEMAP)
+
+def GRAPHICS_DATA_SIZE              equ (TILESET_BYTE_SIZE + TILEMAPS_BYTE_SIZE)
+def GRAPHICS_DATA_ADDRESS_END       equ ($8000)
+def TILESET_ADDRESS_START           equ (GRAPHICS_DATA_ADDRESS_END - GRAPHICS_DATA_SIZE)
+def WINDOW_ADDRESS_START            equ (TILESET_ADDRESS_START + TILESET_BYTE_SIZE)
+def START_SCREEN_ADDRESS_START      equ (WINDOW_ADDRESS_START + BYTES_PER_TILEMAP)
+def LEVEL_1_ADDRESS_START           equ (START_SCREEN_ADDRESS_START + BYTES_PER_TILEMAP)
+def LEVEL_2_ADDRESS_START           equ (LEVEL_1_ADDRESS_START + BYTES_PER_TILEMAP)
+def VRAM_TILEMAP_ADDRESS_START      equ (_VRAM8000 + TILESET_BYTE_SIZE) ;where tilemaps would actually start in VRAM
+def VRAM_WINDOW_ADDRESS_START       equ (VRAM_TILEMAP_ADDRESS_START + BYTES_PER_TILEMAP)
+
+def SCREEN_X_RAM                    rb 1
+def SCREEN_Y_RAM                    rb 1
+
+def LEFT_SIDE_OF_SCREEN             equ (53)
+def RIGHT_SIDE_OF_SCREEN            equ (106)
+def TOP_OF_SCREEN                   equ (48)
+def BOTTOM_OF_SCREEN                equ (96)
+def FAR_RIGHT_OF_SCREEN             equ (160)
+
+def LEVEL_FLAGS                     rb 1
+def ON_LEVEL_1                      equ(%00000001)
+def ON_LEVEL_2                      equ(%00000010)
+def LOST_GAME                       equ(%10000000)
+def WON_GAME                        equ(%01000000)
+
+;Text printing constants
+def WHITE_SPACE                     equ($C3)
+def START_OF_ALPHABET_IN_TILESET    equ($61)
+def NEW_LINE_OFFSET                 equ($20)
+def TEXT_ON_WINDOW                  equ($9C02)
+def ASCII_WHITE_SPACE               equ(20)
+def START_OF_ALPHABET_HEX           equ($41)
+
+def SPRITES_WIDTH                   equ(10)
+
+def MAP_SIDE_LENGTH equ(32)
+
+def MAP_MEMORY_SIZE equ((MAP_SIDE_LENGTH / 8) * (MAP_SIDE_LENGTH) / 8)
+
+def MAP_WALL_STORAGE_START rb MAP_MEMORY_SIZE
+
+def SWORD_SWINGING equ(1)
+def LAST_SWORD_ANIMATION_SPRITE equ(95)
+
+def SWORDF rb 1

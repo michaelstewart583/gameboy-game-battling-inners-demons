@@ -6,16 +6,6 @@ include "utils.inc"
 
 section "inner_demon", rom0
 
-def SPRITE_ATTRIBUTE_SIZE equ (1)
-
-def INNER_DEMONS_SPAWN_POINT_X equ (50)
-def INNER_DEMONS_SPAWN_POINT_Y equ (20)
-
-def INNER_DEMEON_MOVEMENT_AMOUNT equ(1)
-
-def INNER_DEMONS_SPAWN_Y_OFFSET equ(50)
-def INNER_DEMONS_SPAWN_X_OFFSET equ(50)
-
 init_inner_demons:
     ;spawns NUM_INNER_DEMONS spread out accross the screen in a line
     ld a, 0

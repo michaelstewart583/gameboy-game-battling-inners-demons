@@ -3,6 +3,8 @@
 ;@author Michael Stewart and Mitch Johnson
 
 include "utils.inc"
+include "constants.asm"
+include "map_representations.asm"
 include "shared_methods.asm"
 include "inner.asm"
 include "inner_demon.asm"
@@ -50,6 +52,7 @@ start_level_1:
     call init_sword
     call update_visuals
     call init_level_1
+    call init_map_1_walls
     jp game_loop
 
 start_level_2:
