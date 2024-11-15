@@ -65,6 +65,18 @@ macro LoadLevel2TileMapIntoVRAM
         inc de
         ld [hli], a
         ld a, d
+        cp a, high(LEVEL_3_ADDRESS_START)
+        jr nz, .load_tile\@
+endm
+
+macro LoadLevel3TileMapIntoVRAM
+    ld de, LEVEL_3_ADDRESS_START
+    ld hl, VRAM_TILEMAP_ADDRESS_START
+    .load_tile\@
+        ld a, [de]
+        inc de
+        ld [hli], a
+        ld a, d
         cp a, high(GRAPHICS_DATA_ADDRESS_END)
         jr nz, .load_tile\@
 endm
@@ -84,7 +96,7 @@ endm
 macro FixScreenLeft
     ld hl, INNER_SPRITE_0_ADDRESS
     ld de, ENTITY_SIZE
-    ld c, NUM_INNER_DEMONS
+    copy c, [NUM_INNER_DEMONS]
     inc c
     .left_loop
         MoveEntityRightNoAnimation INNER_MOVEMENT_AMOUNT
@@ -100,7 +112,7 @@ endm
 macro FixScreenRight
     ld hl, INNER_SPRITE_0_ADDRESS
     ld de, ENTITY_SIZE
-    ld c, NUM_INNER_DEMONS
+    copy c, [NUM_INNER_DEMONS]
     inc c
     .right_loop
         MoveEntityLeftNoAnimation INNER_MOVEMENT_AMOUNT
@@ -116,7 +128,7 @@ endm
 macro FixScreenUp
     ld hl, INNER_SPRITE_0_ADDRESS
     ld de, ENTITY_SIZE
-    ld c, NUM_INNER_DEMONS
+    copy c, [NUM_INNER_DEMONS]
     inc c
     .up_loop
         MoveEntityDownNoAnimation INNER_MOVEMENT_AMOUNT
@@ -132,7 +144,7 @@ endm
 macro FixScreenBottom
     ld hl, INNER_SPRITE_0_ADDRESS
     ld de, ENTITY_SIZE
-    ld c, NUM_INNER_DEMONS
+    copy c, [NUM_INNER_DEMONS]
     inc c
     .bottom_loop
         MoveEntityUpNoAnimation INNER_MOVEMENT_AMOUNT
@@ -143,6 +155,16 @@ macro FixScreenBottom
     ld a, [SCREEN_Y_RAM]
     add 2
     ld [SCREEN_Y_RAM], a
+endm
+
+macro InitRamSprites
+    ld hl , SWORD_SPRITE_ADDRESS
+    ld c, TOTAL_SPRITE_SIZE
+    .init_ram\@
+        ld [hl], 0
+        inc hl
+        dec c
+        jp nz, .init_ram\@
 endm
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -208,6 +230,7 @@ init_start_screen:
 
     ; init graphics data
     InitOAM
+    InitRamSprites
     LoadTileSetIntoVRAM
     LoadWindowIntoVRAM
     LoadStartScreenTileMapIntoVRAM
@@ -266,7 +289,7 @@ init_level_1:
     ld a, %00011011
     ld [rOBP1], a
 
-    copy [LEVEL_FLAGS], 1
+    copy [LEVEL_FLAGS], ON_LEVEL_1
 
     ; init graphics data
     LoadLevel1TileMapIntoVRAM
@@ -301,10 +324,46 @@ init_level_2:
     ld a, %00011011
     ld [rOBP1], a
 
-    copy [LEVEL_FLAGS], 2
+    copy [LEVEL_FLAGS], ON_LEVEL_2
 
     ; init graphics data
     LoadLevel2TileMapIntoVRAM
+
+    ; enable the vblank interrupt
+    ld a, IEF_VBLANK
+    ld [rIE], a
+    ei
+
+    ; place the window at the bottom of the LCD
+    ld a, 7
+    ld [rWX], a
+    ld a, 120
+    ld [rWY], a
+
+    copy [rSCX], 0
+    copy [rSCY], 50
+    
+    copy [SCREEN_X_RAM], [rSCX]
+    copy [SCREEN_Y_RAM], [rSCY]
+
+    ; set the graphics parameters and turn back LCD on
+    ld a, LCDCF_ON | LCDCF_WIN9C00 | LCDCF_BG8800 | LCDCF_BG9800 | LCDCF_OBJON | LCDCF_OBJ8 | LCDCF_BGON
+    ld [rLCDC], a
+
+    ret
+
+init_level_3:
+        ; init the palettes
+    ld a, %11100100
+    ld [rBGP], a
+    ld [rOBP0], a
+    ld a, %00011011
+    ld [rOBP1], a
+
+    copy [LEVEL_FLAGS], ON_LEVEL_3
+
+    ; init graphics data
+    LoadLevel3TileMapIntoVRAM
 
     ; enable the vblank interrupt
     ld a, IEF_VBLANK
@@ -409,6 +468,9 @@ update_game_state:
         ld [LEVEL_FLAGS], a
         and a, ON_LEVEL_1
         jp nz, start_level_2
+        ld [LEVEL_FLAGS], a
+        and a, ON_LEVEL_2
+        jp nz, start_level_3
         jp restart_game
     .done
     ret
@@ -416,7 +478,7 @@ update_game_state:
 macro CheckCollisionNotRight
     copy b, [INNER_SPRITE_0_ADDRESS + OAMA_Y]
     ld hl, INNER_DEMONS_START_ADDRESS + OAMA_Y
-    ld c, NUM_INNER_DEMONS
+    copy c, [NUM_INNER_DEMONS]
 
     .loop_not_right
         push hl
@@ -458,7 +520,7 @@ endm
 macro CheckCollisionRight
     copy b, [INNER_SPRITE_1_ADDRESS + OAMA_Y]
     ld hl, INNER_DEMONS_START_ADDRESS + sizeof_OAM_ATTRS + OAMA_Y
-    ld c, NUM_INNER_DEMONS
+    copy c, [NUM_INNER_DEMONS]
 
     .loop_right
         push hl
@@ -558,5 +620,4 @@ incbin "window_tilemap.tlm"
 incbin "start_screen_tilemap.tlm"
 incbin "level_1_tilemap.tlm"
 incbin "level_2_tilemap.tlm"
-
-
+incbin "level_3_tilemap.tlm"

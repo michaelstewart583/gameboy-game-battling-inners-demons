@@ -55,8 +55,84 @@ macro MoveEntityRightNoAnimation
     pop hl
 endm
 
+CheckRightMoveValidity:
+    ;sets (a) equal to 1 if moving the entity with sprite 0 stored at 
+    ;[hl] up by one pixel would result in a collision with a wall and sets 
+    ;(a) equal to 0 otherwise
+    push hl
+    ; byte index that they are in = (x / 8) * 4 + (y / 8)
+    ; bit in byte = x mod 8  ;; mod 8 by doing and %00000111
+    ; start with 10000000 and shift right by bit in byte times
+    ; then once shifted, and it with the byte
+    ld de, sizeof_OAM_ATTRS
+    add hl, de
+    ld de, OAMA_Y
+    add hl, de
+    ld a, [rSCY] ;look at sprite y coordinate
+    sub a, 16
+    add a, [hl]
+    srl a
+    srl a
+    srl a 
+    ld b, a ;b is now the entity's row number if it moved up by 1
+    inc hl 
+    ld a, [rSCX] ;now look at sprite's x coordinate
+    sub a, 8
+    add a, [hl]
+    add a, 9 ;moving right by 1 pixel
+    srl a
+    srl a
+    srl a
+    ld c, a ;c is the column number
+    ld a, b
+    ld hl, MAP_WALL_STORAGE_START
+    cp a, 0
+    jp z, .done_getting_map_row_start_byte
+    .get_map_row_start_byte
+        ld de, 4
+        add hl, de
+        dec a
+        cp a, 0
+        jp nz, .get_map_row_start_byte
+    .done_getting_map_row_start_byte
+    ld a, c
+    srl a
+    srl a
+    srl a
+    cp a, 0
+    jp z, .done_getting_map_column_byte
+    .get_map_column_start_byte
+        inc hl
+        dec a
+        cp a, 0
+        jp nz, .get_map_column_start_byte
+    .done_getting_map_column_byte
+    ld a, c
+    and a, %00000111 ;a mod 8 = bit num (from the left) within byte
+    ld c, %10000000 ;bit checker
+    cp a, 0
+    jp z, .done_determining_bit_location_in_map_byte
+    .determine_bit_location_in_map_byte ;sets the bit location of the sprite within the byte equal to 1
+        srl c
+        dec a
+        jp nz, .determine_bit_location_in_map_byte
+    .done_determining_bit_location_in_map_byte
+    ld a, [hl]
+    pop hl
+    and a, c ;checking if there is a 1 at the bit location wher the sprite is in the map byte
+    ret
+
+
 macro MoveEntityRight
     ;moves the entity with its top left sprite at memory address [hl] \1 pixels to the right
+    call CheckRightMoveValidity
+    jp nz, .no_movement_right
+    push hl
+    ld de, (sizeof_OAM_ATTRS * 2)
+    add hl, de
+    call CheckRightMoveValidity
+    pop hl
+    jp nz, .no_movement_right
     push bc
     MoveEntityRightNoAnimation \1
     push hl
@@ -118,6 +194,7 @@ macro MoveEntityRight
         copy_or_palette [hl], OAMF_XFLIP
     pop hl
     pop bc
+    .no_movement_right
 endm
 
 macro MoveEntityLeftNoAnimation
@@ -145,7 +222,82 @@ macro MoveEntityLeftNoAnimation
     pop hl
 endm
 
+CheckLeftMoveValidity:
+    ;sets (a) equal to 1 if moving the entity with sprite 0 stored at 
+    ;[hl] up by one pixel would result in a collision with a wall and sets 
+    ;(a) equal to 0 otherwise
+    push hl
+    ; byte index that they are in = (x / 8) * 4 + (y / 8)
+    ; bit in byte = x mod 8  ;; mod 8 by doing and %00000111
+    ; start with 10000000 and shift right by bit in byte times
+    ; then once shifted, and it with the byte
+    ld de, OAMA_Y
+    add hl, de
+    ld a, [rSCY] ;look at sprite y coordinate
+    sub a, 16
+    add a, [hl]
+    srl a
+    srl a
+    srl a 
+    ld b, a ;b is now the entity's row number if it moved up by 1
+    inc hl 
+    ld a, [rSCX] ;now look at sprite's x coordinate
+    dec a ;check one pixel to the left
+    sub a, 8
+    add a, [hl]
+    srl a
+    srl a
+    srl a
+    ld c, a ;c is the column number
+    ld a, b
+    ld hl, MAP_WALL_STORAGE_START
+    cp a, 0
+    jp z, .done_getting_map_row_start_byte
+    .get_map_row_start_byte
+        ld de, 4
+        add hl, de
+        dec a
+        cp a, 0
+        jp nz, .get_map_row_start_byte
+    .done_getting_map_row_start_byte
+    ld a, c
+    srl a
+    srl a
+    srl a
+    cp a, 0
+    jp z, .done_getting_map_column_byte
+    .get_map_column_start_byte
+        inc hl
+        dec a
+        cp a, 0
+        jp nz, .get_map_column_start_byte
+    .done_getting_map_column_byte
+    ld a, c
+    and a, %00000111 ;a mod 8 = bit num (from the left) within byte
+    ld c, %10000000 ;bit checker
+    cp a, 0
+    jp z, .done_determining_bit_location_in_map_byte
+    .determine_bit_location_in_map_byte ;sets the bit location of the sprite within the byte equal to 1
+        srl c
+        dec a
+        jp nz, .determine_bit_location_in_map_byte
+    .done_determining_bit_location_in_map_byte
+    ld a, [hl]
+    pop hl
+    and a, c ;checking if there is a 1 at the bit location wher the sprite is in the map byte
+    ret
+
+
 macro MoveEntityLeft
+    call CheckLeftMoveValidity
+    jp nz, .no_movement_left
+    push hl
+    ld de, (sizeof_OAM_ATTRS * 2)
+    add hl, de
+    call CheckLeftMoveValidity
+    pop hl
+    jp nz, .no_movement_left
+
     ;moves the entity with its top left sprite at memory address [hl] the argument's pixels to the left
     push bc
     MoveEntityLeftNoAnimation \1
@@ -207,6 +359,7 @@ macro MoveEntityLeft
         copy_or_palette [hl], 0
     pop hl
     pop bc
+    .no_movement_left
 endm
 
 macro MoveEntityUpNoAnimation
@@ -234,55 +387,82 @@ macro MoveEntityUpNoAnimation
     pop hl
 endm
 
-macro CheckUpMoveValidity
+CheckUpMoveValidity:
     ;sets (a) equal to 1 if moving the entity with sprite 0 stored at 
     ;[hl] up by one pixel would result in a collision with a wall and sets 
     ;(a) equal to 0 otherwise
     push hl
-    push de
-    push bc
-    ;first get the row start tile index
+    ; byte index that they are in = (x / 8) * 4 + (y / 8)
+    ; bit in byte = x mod 8  ;; mod 8 by doing and %00000111
+    ; start with 10000000 and shift right by bit in byte times
+    ; then once shifted, and it with the byte
+
     ld de, OAMA_Y
     add hl, de
-    ld a, [hl]
+    ld a, [rSCY] ;look at sprite y coordinate
+    dec a ;move entity up by 1 pixel
+    sub a, 16
+    add a, [hl]
     srl a
     srl a
-    srl a ;a is now the entity's row number if it moved up by 1
-    ld b, 0
-    ld c, a ;bc is now floor(y_pos/8)
-    ld a, 0 ;counter
+    srl a 
+    ld b, a ;b is now the entity's row number if it moved up by 1
+    inc hl 
+    ld a, [rSCX] ;now look at sprite's x coordinate
+    sub a, 8
+    add a, [hl]
+    srl a
+    srl a
+    srl a
+    ld c, a ;c is the column number
+    ld a, b
     ld hl, MAP_WALL_STORAGE_START
-    .add_row_times_32_to_map_wall_storage_start_loop
-        add hl, bc
-        inc a
-        cp a, 32
-        jp nz, .add_row_times_32_to_map_wall_storage_start_loop
-    ;now get column offset
-    ld de, OAMA_X
-    add hl, de
+    cp a, 0
+    jp z, .done_getting_map_row_start_byte
+    .get_map_row_start_byte
+        ld de, 4
+        add hl, de
+        dec a
+        cp a, 0
+        jp nz, .get_map_row_start_byte
+    .done_getting_map_row_start_byte
+    ld a, c
+    srl a
+    srl a
+    srl a
+    cp a, 0
+    jp z, .done_getting_map_column_byte
+    .get_map_column_start_byte
+        inc hl
+        dec a
+        cp a, 0
+        jp nz, .get_map_column_start_byte
+    .done_getting_map_column_byte
+    ld a, c
+    and a, %00000111 ;a mod 8 = bit num (from the left) within byte
+    ld c, %10000000 ;bit checker
+    cp a, 0
+    jp z, .done_determining_bit_location_in_map_byte
+    .determine_bit_location_in_map_byte ;sets the bit location of the sprite within the byte equal to 1
+        srl c
+        dec a
+        jp nz, .determine_bit_location_in_map_byte
+    .done_determining_bit_location_in_map_byte
     ld a, [hl]
-    dec a ;moving a up by 1 pixel
-    ld d, 0
-    ld e, a ;de is now the column offset
-
-    ;now add column offset to row start wall map index to get final wall map index
-    add hl, de
-
-    pop bc
-    pop de
-    ld a, [hl] ;now load wall status at wall map index, if a = 1 if there is a wall, a = 0 else
-    bit a, e ;if bit is zero, set zero flag
-    jp z, .done_checking_up_move_validity
-    inc hl ;checking top right column
-    ld a, [hl]
-    .done_checking_up_move_validity
     pop hl
-endm
+    and a, c ;checking if there is a 1 at the bit location wher the sprite is in the map byte
+    ret
 
 macro MoveEntityUp
-    CheckUpMoveValidity
-    cp a, 1
-    jp z, .done_up
+    call CheckUpMoveValidity
+    jp nz, .no_movement_up
+    push hl
+    ld de, sizeof_OAM_ATTRS
+    add hl, de
+    call CheckUpMoveValidity
+    pop hl
+    jp nz, .no_movement_up
+
     ;moves the entity with its top left sprite at memory address [hl] the argument's pixels up
     push bc
     MoveEntityUpNoAnimation \1
@@ -305,6 +485,7 @@ macro MoveEntityUp
     add hl, bc
     ld [hl], a
     
+
     ;sprite 2
     add SPRITE_BOTTOM_LEFT_TILE_NUM - 1
     add hl, bc
@@ -346,6 +527,7 @@ macro MoveEntityUp
         copy_or_palette [hl], 0
     pop hl
     pop bc
+    .no_movement_up
 endm
 
 macro MoveEntityDownNoAnimation
@@ -372,7 +554,82 @@ macro MoveEntityDownNoAnimation
     pop hl
 endm
 
+CheckDownMoveValidity:
+    ;sets (a) equal to 1 if moving the entity with sprite 0 stored at 
+    ;[hl] up by one pixel would result in a collision with a wall and sets 
+    ;(a) equal to 0 otherwise
+    push hl
+    ; byte index that they are in = (x / 8) * 4 + (y / 8)
+    ; bit in byte = x mod 8  ;; mod 8 by doing and %00000111
+    ; start with 10000000 and shift right by bit in byte times
+    ; then once shifted, and it with the byte
+    ld de, (sizeof_OAM_ATTRS * 2)
+    add hl, de
+    ld de, OAMA_Y
+    add hl, de
+    ld a, [rSCY] ;look at sprite y coordinate
+    add a, 9 ;move entity down by 1 tile
+    sub a, 16
+    add a, [hl]
+    srl a
+    srl a
+    srl a 
+    ld b, a ;b is now the entity's row number if it moved up by 1
+    inc hl 
+    ld a, [rSCX] ;now look at sprite's x coordinate
+    sub a, 8
+    add a, [hl]
+    srl a
+    srl a
+    srl a
+    ld c, a ;c is the column number
+    ld a, b
+    ld hl, MAP_WALL_STORAGE_START
+    cp a, 0
+    jp z, .done_getting_map_row_start_byte
+    .get_map_row_start_byte
+        ld de, 4
+        add hl, de
+        dec a
+        cp a, 0
+        jp nz, .get_map_row_start_byte
+    .done_getting_map_row_start_byte
+    ld a, c
+    srl a
+    srl a
+    srl a
+    cp a, 0
+    jp z, .done_getting_map_column_byte
+    .get_map_column_start_byte
+        inc hl
+        dec a
+        cp a, 0
+        jp nz, .get_map_column_start_byte
+    .done_getting_map_column_byte
+    ld a, c
+    and a, %00000111 ;a mod 8 = bit num (from the left) within byte
+    ld c, %10000000 ;bit checker
+    cp a, 0
+    jp z, .done_determining_bit_location_in_map_byte
+    .determine_bit_location_in_map_byte ;sets the bit location of the sprite within the byte equal to 1
+        srl c
+        dec a
+        jp nz, .determine_bit_location_in_map_byte
+    .done_determining_bit_location_in_map_byte
+    ld a, [hl]
+    pop hl
+    and a, c ;checking if there is a 1 at the bit location wher the sprite is in the map byte
+    ret
+
 macro MoveEntityDown
+    call CheckDownMoveValidity
+    jp nz, .no_movement_down
+    push hl
+    ld de, sizeof_OAM_ATTRS
+    add hl, de
+    call CheckDownMoveValidity
+    pop hl
+    jp nz, .no_movement_down
     ;moves the entity with its top left sprite at memory address [hl] [arg1] pixels down
     push bc
     MoveEntityDownNoAnimation \1
@@ -434,6 +691,7 @@ macro MoveEntityDown
         copy_or_palette [hl], 0
     pop hl
     pop bc
+    .no_movement_down
 endm
 
 

@@ -73,7 +73,10 @@ init_inner_demons:
         ld e, a
         pop af
         inc a
-        cp a, NUM_INNER_DEMONS
+        push hl
+        ld hl, NUM_INNER_DEMONS
+        cp a, [hl]
+        pop hl
         jp nz, .loop
     ret
 
@@ -182,7 +185,10 @@ move_inner_demons:
         add hl, bc
         pop af
         inc a
-        cp a, NUM_INNER_DEMONS
+        push hl
+        ld hl, NUM_INNER_DEMONS
+        cp a, [hl]
+        pop hl
         jp nz, .loop
     .done
     ret

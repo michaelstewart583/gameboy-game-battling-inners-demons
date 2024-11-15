@@ -46,6 +46,7 @@ start_screen_loop:
     jp nz, start_screen_loop
     
 start_level_1:
+    copy [NUM_INNER_DEMONS], LEVEL_1_NUM_INNER_DEMONS
     DisableLCD
     call init_inner
     call init_inner_demons
@@ -56,12 +57,23 @@ start_level_1:
     jp game_loop
 
 start_level_2:
+    copy [NUM_INNER_DEMONS], LEVEL_2_NUM_INNER_DEMONS
     DisableLCD
     call init_inner
     call init_inner_demons
     call init_sword
     call update_visuals
     call init_level_2
+    jp game_loop
+
+start_level_3:
+    copy [NUM_INNER_DEMONS], LEVEL_3_NUM_INNER_DEMONS
+    DisableLCD
+    call init_inner
+    call init_inner_demons
+    call init_sword
+    call update_visuals
+    call init_level_3
     jp game_loop
 
 game_loop:
