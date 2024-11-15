@@ -64,6 +64,7 @@ start_level_2:
     call init_sword
     call update_visuals
     call init_level_2
+    call init_map_2_walls
     jp game_loop
 
 start_level_3:
@@ -74,6 +75,7 @@ start_level_3:
     call init_sword
     call update_visuals
     call init_level_3
+    call init_map_3_walls
     jp game_loop
 
 game_loop:
@@ -81,10 +83,14 @@ game_loop:
     call move_inner_demons
     call move_screen
     call update_sword
-    halt
-    halt
-    halt
-    halt
+    .time_loop
+        halt
+        ld a, [HALT_TIMER]
+        inc a
+        and %00000011
+        ld [HALT_TIMER], a
+        jp nz, .time_loop
+
     call update_visuals
     call handle_interaction
     call update_game_state

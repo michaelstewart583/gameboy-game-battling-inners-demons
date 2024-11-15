@@ -158,10 +158,14 @@ move_inner_demons:
             jp z, .move_entity_left_call
             jp .y_movement
             .move_entity_right_call
+                push bc
                 MoveEntityRight INNER_DEMEON_MOVEMENT_AMOUNT
+                pop bc
                 jp .y_movement
             .move_entity_left_call
+                push bc
                 MoveEntityLeft INNER_DEMEON_MOVEMENT_AMOUNT
+                pop bc
                 jp .y_movement
             
         .y_movement

@@ -144,16 +144,47 @@ update_sword:
     .kill_inner_demon
         ld c, NUM_SPRITES_IN_ENTITY
 
-        ;Kills the inner demon that was hit by the sword by placing them at 0,0
+        ;Calculates the screen position from the global position
+        ld a, [rSCY]
+        ld d, a
+        ld a, [INNER_DEMON_RESPAWN_Y]
+        sub a, d
+        ld d, a
+
+        ld a, [rSCX]
+        ld e, a
+        ld a, [INNER_DEMON_RESPAWN_X]
+        sub a, e
+        ld e, a
+
+
+        ;Kills the inner demon that was hit by the sword by placing them at the respawn point
         .kill_loop
             push hl
-            copy [hl], 0
+            ld [hl], d
+            push de
             ld de, OAMA_X
             add hl, de
-            copy [de], 0
+            pop de
+            ld [hl], e
             pop hl
+            push de
             ld de, sizeof_OAM_ATTRS
             add hl, de
+            pop de
+            ld a, e
+            add a, 8
+            ld e, a
+            ld a, c
+            and a, %00000001
+            jp z, .end_of_loop
+            ld a, e
+            sub a, 16
+            ld e, a
+            ld a, d
+            add a, 8
+            ld d, a
+            .end_of_loop
             dec c
             jp nz, .kill_loop
 

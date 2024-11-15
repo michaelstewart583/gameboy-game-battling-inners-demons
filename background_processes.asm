@@ -5,6 +5,10 @@
 include "utils.inc"
 
 section "vblank_interrupt", rom0[$0040]
+    push af
+    ld a, [HALT_TIMER]
+    inc a
+    pop af
     reti
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -290,6 +294,8 @@ init_level_1:
     ld [rOBP1], a
 
     copy [LEVEL_FLAGS], ON_LEVEL_1
+    copy [INNER_DEMON_RESPAWN_X], INNER_DEMON_LEVEL_1_RESPAWN_X
+    copy [INNER_DEMON_RESPAWN_Y], INNER_DEMON_LEVEL_1_RESPAWN_Y
 
     ; init graphics data
     LoadLevel1TileMapIntoVRAM
@@ -326,6 +332,9 @@ init_level_2:
 
     copy [LEVEL_FLAGS], ON_LEVEL_2
 
+    copy [INNER_DEMON_RESPAWN_X], INNER_DEMON_LEVEL_2_RESPAWN_X
+    copy [INNER_DEMON_RESPAWN_Y], INNER_DEMON_LEVEL_2_RESPAWN_Y
+
     ; init graphics data
     LoadLevel2TileMapIntoVRAM
 
@@ -361,6 +370,8 @@ init_level_3:
     ld [rOBP1], a
 
     copy [LEVEL_FLAGS], ON_LEVEL_3
+    copy [INNER_DEMON_RESPAWN_X], INNER_DEMON_LEVEL_3_RESPAWN_X
+    copy [INNER_DEMON_RESPAWN_Y], INNER_DEMON_LEVEL_3_RESPAWN_Y
 
     ; init graphics data
     LoadLevel3TileMapIntoVRAM
@@ -468,7 +479,7 @@ update_game_state:
         ld [LEVEL_FLAGS], a
         and a, ON_LEVEL_1
         jp nz, start_level_2
-        ld [LEVEL_FLAGS], a
+        ld a, [LEVEL_FLAGS]
         and a, ON_LEVEL_2
         jp nz, start_level_3
         jp restart_game
