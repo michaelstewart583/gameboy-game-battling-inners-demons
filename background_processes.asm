@@ -253,6 +253,9 @@ init_start_screen:
     copy [rSCX], 0
     copy [rSCY], 0
 
+    copy [INNER_X_POSITION], LEVEL_1_X_POSITION
+    copy [INNER_Y_POSITION], LEVEL_1_Y_POSITION
+
     copy [SCREEN_X_RAM], [rSCX]
     copy [SCREEN_Y_RAM], [rSCY]
 
@@ -314,6 +317,9 @@ init_level_1:
     copy [rSCX], 0
     copy [rSCY], 50
 
+    copy [INNER_X_POSITION], LEVEL_2_X_POSITION
+    copy [INNER_Y_POSITION], LEVEL_2_Y_POSITION
+
     copy [SCREEN_X_RAM], [rSCX]
     copy [SCREEN_Y_RAM], [rSCY]
 
@@ -351,6 +357,9 @@ init_level_2:
 
     copy [rSCX], 0
     copy [rSCY], 50
+
+    copy [INNER_X_POSITION], LEVEL_3_X_POSITION
+    copy [INNER_Y_POSITION], LEVEL_3_Y_POSITION
     
     copy [SCREEN_X_RAM], [rSCX]
     copy [SCREEN_Y_RAM], [rSCY]
@@ -474,6 +483,7 @@ update_game_state:
     cp a, FAR_RIGHT_OF_SCREEN
     jp c, .done
     .level_beat
+        pop hl
         ld a, [LEVEL_FLAGS]
         or WON_GAME
         ld [LEVEL_FLAGS], a
@@ -583,6 +593,7 @@ handle_interaction:
 
     .lost_game
         copy [LEVEL_FLAGS], LOST_GAME
+        pop hl
         jp restart_game
     .done
     ret

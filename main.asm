@@ -66,7 +66,7 @@ start_level_2:
     call init_level_2
     call init_map_2_walls
     jp game_loop
-
+  
 start_level_3:
     copy [NUM_INNER_DEMONS], LEVEL_3_NUM_INNER_DEMONS
     DisableLCD

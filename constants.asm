@@ -1,3 +1,7 @@
+;Defines all constants (that are not alread defined in hardware.inc) used in all files
+;@file constants.asm
+;@author Michael Stewart and Mitch Johnson
+
 def NUM_SPRITES_IN_ENTITY equ (4)
 def ENTITY_SIZE equ(NUM_SPRITES_IN_ENTITY * sizeof_OAM_ATTRS)
 
@@ -32,8 +36,16 @@ def FACING_DIRECTION rb 1
 def IS_WALKING rb 1
 def NUM_INNER_DEMONS rb 1
 
-def SPRITE_TOP_LEFT_X equ (16)
-def SPRITE_TOP_LEFT_Y equ (86)
+def LEVEL_1_X_POSITION equ (16)
+def LEVEL_1_Y_POSITION equ (86)
+def LEVEL_2_X_POSITION equ (16)
+def LEVEL_2_Y_POSITION equ (64)
+def LEVEL_3_X_POSITION equ (16)
+def LEVEL_3_Y_POSITION equ (70)
+
+def INNER_X_POSITION rb 1
+def INNER_Y_POSITION rb 1
+
 def SPRITE_TILE_WIDTH equ (8)
 def SPRITE_TOP_LEFT_TILE_NUM equ (0)
 def SPRITE_BOTTOM_LEFT_TILE_NUM equ (16)
@@ -45,13 +57,13 @@ def INNER_MOVEMENT_AMOUNT equ (2)
 
 def SPRITE_ATTRIBUTE_SIZE equ (1)
 
-def INNER_DEMONS_SPAWN_POINT_X equ (50)
+def INNER_DEMONS_SPAWN_POINT_X equ (40)
 def INNER_DEMONS_SPAWN_POINT_Y equ (20)
 
-def INNER_DEMEON_MOVEMENT_AMOUNT equ(1)
+def INNER_DEMONS_SPAWN_X_OFFSET equ(175)
+def INNER_DEMONS_SPAWN_Y_OFFSET equ(30)
 
-def INNER_DEMONS_SPAWN_Y_OFFSET equ(50)
-def INNER_DEMONS_SPAWN_X_OFFSET equ(50)
+def INNER_DEMEON_MOVEMENT_AMOUNT equ(1)
 
 def INNER_DEMON_RESPAWN_X           rb 1
 def INNER_DEMON_RESPAWN_Y           rb 1
