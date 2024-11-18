@@ -6,7 +6,7 @@ macro copy_or_movement
     ;\2 is intended to be a sprite's TileID
     ;Copies value \1 into \2 while maintaining if the sprite is mid step
     ld a, \1
-    and %00000010
+    and MOVEMENT
     or \2
     ld \1, a
 endm
@@ -24,8 +24,8 @@ macro copy_xor_movement
     ;\2 is intended to be a sprite's TileID
     ;Copies value \1 into \2 while switching if the sprite is mid step
     ld a, \1
-    and %00000010
-    xor %00000010
+    and MOVEMENT
+    xor MOVEMENT
     or \2
     ld \1, a
 endm
@@ -39,7 +39,7 @@ macro MoveEntityRightNoAnimation
     ld a, 0
     ld bc, sizeof_OAM_ATTRS
     ;loop through, starting at the entity address + OAM_X, and jumping in memory by sizeof_OAM_ATTRS
-    .right_location_loop
+    .right_location_loop\@
         push af
         ld a, [hl]
         add \1
@@ -48,48 +48,55 @@ macro MoveEntityRightNoAnimation
         pop af
         inc a
         cp a, NUM_SPRITES_IN_ENTITY 
-        jp nz, .right_location_loop
+        jp nz, .right_location_loop\@
 
     ;get the entity address
     pop bc
     pop hl
 endm
 
+; General ___MOVE_VALIDITY Algorithm (used throughout):
+; byte index that they are in = (x / 8) * 4 + (y / 8)
+; bit in byte = x mod 8  ;; mod 8 by doing: and %00000111
+; start with 10000000 and shift right by bit_in_byte times
+; then once shifted, and it with the byte
+
 CheckRightMoveValidity:
     ;sets (a) equal to 1 if moving the entity with sprite 0 stored at 
     ;[hl] up by one pixel would result in a collision with a wall and sets 
     ;(a) equal to 0 otherwise
     push hl
-    ; byte index that they are in = (x / 8) * 4 + (y / 8)
-    ; bit in byte = x mod 8  ;; mod 8 by doing and %00000111
-    ; start with 10000000 and shift right by bit in byte times
-    ; then once shifted, and it with the byte
     ld de, sizeof_OAM_ATTRS
     add hl, de
     ld de, OAMA_Y
     add hl, de
-    ld a, [rSCY] ;look at sprite y coordinate
-    sub a, 16
+    ;look at sprite y coordinate:
+    ld a, [rSCY] 
+    sub a, GLOBAL_Y_COORD_OFFSET
     add a, [hl]
     srl a
     srl a
     srl a 
-    ld b, a ;b is now the entity's row number if it moved up by 1
+    ld b, a 
+    ;b is now the entity's row number if it moved up by 1
     inc hl 
-    ld a, [rSCX] ;now look at sprite's x coordinate
-    sub a, 8
+    ;now look at sprite's x coordinate:
+    ld a, [rSCX] 
+    sub a, GLOBAL_X_COORD_OFFSET
     add a, [hl]
-    add a, 9 ;moving right by 1 pixel
+    ;moving right by 1 pixel:
+    add a, TILE_WIDTH + 1
     srl a
     srl a
     srl a
-    ld c, a ;c is the column number
+    ;c is the column number:
+    ld c, a 
     ld a, b
     ld hl, MAP_WALL_STORAGE_START
     cp a, 0
     jp z, .done_getting_map_row_start_byte
     .get_map_row_start_byte
-        ld de, 4
+        ld de, WALL_BYTES_IN_MAP_ROW
         add hl, de
         dec a
         cp a, 0
@@ -108,31 +115,33 @@ CheckRightMoveValidity:
         jp nz, .get_map_column_start_byte
     .done_getting_map_column_byte
     ld a, c
-    and a, %00000111 ;a mod 8 = bit num (from the left) within byte
-    ld c, %10000000 ;bit checker
+    and a, MOD_8 
+    ;bit checker:
+    ld c, %10000000 
     cp a, 0
     jp z, .done_determining_bit_location_in_map_byte
-    .determine_bit_location_in_map_byte ;sets the bit location of the sprite within the byte equal to 1
+    ;sets the bit location of the sprite within the byte equal to 1:
+    .determine_bit_location_in_map_byte 
         srl c
         dec a
         jp nz, .determine_bit_location_in_map_byte
     .done_determining_bit_location_in_map_byte
     ld a, [hl]
     pop hl
-    and a, c ;checking if there is a 1 at the bit location wher the sprite is in the map byte
-    ret
-
+    ;checking if there is a 1 at the bit location where the sprite is in the map byte
+    and a, c
+ret
 
 macro MoveEntityRight
     ;moves the entity with its top left sprite at memory address [hl] \1 pixels to the right
     call CheckRightMoveValidity
-    jp nz, .no_movement_right
+    jp nz, .no_movement_right\@
     push hl
-    ld de, (sizeof_OAM_ATTRS * 2)
+    ld de, (sizeof_OAM_ATTRS * NUM_SPRITES_MAKING_UP_ENTITY_SIDE)
     add hl, de
     call CheckRightMoveValidity
     pop hl
-    jp nz, .no_movement_right
+    jp nz, .no_movement_right\@
     push bc
     MoveEntityRightNoAnimation \1
     push hl
@@ -141,10 +150,10 @@ macro MoveEntityRight
     add hl, bc
     ld a, [hl]
     cp a, SPRITE_SIDE_MOVEMENT
-    jp c, .start_walking_right
-    add 2
-    and %01000011
-    or %00000001
+    jp c, .start_walking_right\@
+    add ENTITY_WALKING_ANIMATION_OFFSET
+    and KEEPS_SPRITE_AS_ONE_OF_TWO_VALID_WALKING_RIGHT_SPRITES
+    or SPRITE_FLIP
     ld [hl], a
 
     ;sprite 1
@@ -163,9 +172,9 @@ macro MoveEntityRight
     add hl, bc
     ld [hl], a
 
-    jp .done_right
+    jp .done_right\@
 
-    .start_walking_right
+    .start_walking_right\@
         pop hl
         push hl
         ld bc, OAMA_TILEID
@@ -179,7 +188,7 @@ macro MoveEntityRight
         add hl, bc       
         copy_or_movement [hl], SPRITE_SIDE_MOVEMENT + SPRITE_BOTTOM_LEFT_TILE_NUM
 
-    .done_right
+    .done_right\@
         pop hl
         push hl
         ld bc, OAMA_FLAGS
@@ -194,7 +203,7 @@ macro MoveEntityRight
         copy_or_palette [hl], OAMF_XFLIP
     pop hl
     pop bc
-    .no_movement_right
+    .no_movement_right\@
 endm
 
 macro MoveEntityLeftNoAnimation
@@ -206,7 +215,7 @@ macro MoveEntityLeftNoAnimation
     ld a, 0
     ld bc, sizeof_OAM_ATTRS
     ;loop through, starting at the entity address + OAM_X, and jumping in memory by sizeof_OAM_ATTRS
-    .left_location_loop
+    .left_location_loop\@
         push af
         ld a, [hl]
         sub \1
@@ -215,7 +224,7 @@ macro MoveEntityLeftNoAnimation
         pop af
         inc a
         cp a, NUM_SPRITES_IN_ENTITY 
-        jp nz, .left_location_loop
+        jp nz, .left_location_loop\@
 
     ;restores the state
     pop bc
@@ -227,34 +236,35 @@ CheckLeftMoveValidity:
     ;[hl] up by one pixel would result in a collision with a wall and sets 
     ;(a) equal to 0 otherwise
     push hl
-    ; byte index that they are in = (x / 8) * 4 + (y / 8)
-    ; bit in byte = x mod 8  ;; mod 8 by doing and %00000111
-    ; start with 10000000 and shift right by bit in byte times
-    ; then once shifted, and it with the byte
     ld de, OAMA_Y
     add hl, de
-    ld a, [rSCY] ;look at sprite y coordinate
-    sub a, 16
+    ;look at sprite y coordinate:
+    ld a, [rSCY] 
+    sub a, GLOBAL_Y_COORD_OFFSET
     add a, [hl]
     srl a
     srl a
     srl a 
-    ld b, a ;b is now the entity's row number if it moved up by 1
+    ld b, a 
+    ;b is now the entity's row number if it moved up by 1
     inc hl 
-    ld a, [rSCX] ;now look at sprite's x coordinate
-    dec a ;check one pixel to the left
-    sub a, 8
+    ;now look at sprite's x coordinate:
+    ld a, [rSCX] 
+    ;check one pixel to the left:
+    dec a 
+    sub a, GLOBAL_X_COORD_OFFSET
     add a, [hl]
     srl a
     srl a
     srl a
-    ld c, a ;c is the column number
+    ;c is the column number:
+    ld c, a 
     ld a, b
     ld hl, MAP_WALL_STORAGE_START
     cp a, 0
     jp z, .done_getting_map_row_start_byte
     .get_map_row_start_byte
-        ld de, 4
+        ld de, WALL_BYTES_IN_MAP_ROW
         add hl, de
         dec a
         cp a, 0
@@ -273,30 +283,32 @@ CheckLeftMoveValidity:
         jp nz, .get_map_column_start_byte
     .done_getting_map_column_byte
     ld a, c
-    and a, %00000111 ;a mod 8 = bit num (from the left) within byte
-    ld c, %10000000 ;bit checker
+    and a, MOD_8 
+    ;bit checker:
+    ld c, %10000000 
     cp a, 0
     jp z, .done_determining_bit_location_in_map_byte
-    .determine_bit_location_in_map_byte ;sets the bit location of the sprite within the byte equal to 1
+    ;sets the bit location of the sprite within the byte equal to 1
+    .determine_bit_location_in_map_byte 
         srl c
         dec a
         jp nz, .determine_bit_location_in_map_byte
     .done_determining_bit_location_in_map_byte
     ld a, [hl]
     pop hl
-    and a, c ;checking if there is a 1 at the bit location wher the sprite is in the map byte
-    ret
-
+    ;checking if there is a 1 at the bit location wher the sprite is in the map byte
+    and a, c 
+ret
 
 macro MoveEntityLeft
     call CheckLeftMoveValidity
-    jp nz, .no_movement_left
+    jp nz, .no_movement_left\@
     push hl
-    ld de, (sizeof_OAM_ATTRS * 2)
+    ld de, (sizeof_OAM_ATTRS * NUM_SPRITES_MAKING_UP_ENTITY_SIDE)
     add hl, de
     call CheckLeftMoveValidity
     pop hl
-    jp nz, .no_movement_left
+    jp nz, .no_movement_left\@
 
     ;moves the entity with its top left sprite at memory address [hl] the argument's pixels to the left
     push bc
@@ -307,9 +319,9 @@ macro MoveEntityLeft
     add hl, bc
     ld a, [hl]
     cp a, SPRITE_SIDE_MOVEMENT
-    jp c, .start_walking_left
-    add 2
-    and %01000010
+    jp c, .start_walking_left\@
+    add ENTITY_WALKING_ANIMATION_OFFSET
+    and KEEPS_SPRITE_AS_ONE_OF_TWO_VALID_WALKING_LEFT_SPRITES
     ld [hl], a
 
     ;sprite 1
@@ -328,9 +340,9 @@ macro MoveEntityLeft
     add hl, bc
     ld [hl], a
 
-    jp .done_left
+    jp .done_left\@
 
-    .start_walking_left
+    .start_walking_left\@
         pop hl
         push hl
         ld bc, OAMA_TILEID
@@ -344,7 +356,7 @@ macro MoveEntityLeft
         add hl, bc       
         copy_or_movement [hl], SPRITE_SIDE_MOVEMENT + SPRITE_BOTTOM_LEFT_TILE_NUM + 1
 
-    .done_left
+    .done_left\@
         pop hl
         push hl
         ld bc, OAMA_FLAGS
@@ -359,7 +371,7 @@ macro MoveEntityLeft
         copy_or_palette [hl], 0
     pop hl
     pop bc
-    .no_movement_left
+    .no_movement_left\@
 endm
 
 macro MoveEntityUpNoAnimation
@@ -371,7 +383,7 @@ macro MoveEntityUpNoAnimation
     ld a, 0
     ld bc, sizeof_OAM_ATTRS
     ;loop through, starting at the entity address + OAM_X, and jumping in memory by sizeof_OAM_ATTRS
-    .up_location_loop
+    .up_location_loop\@
         push af
         ld a, [hl]
         sub \1
@@ -380,7 +392,7 @@ macro MoveEntityUpNoAnimation
         pop af
         inc a
         cp a, NUM_SPRITES_IN_ENTITY 
-        jp nz, .up_location_loop
+        jp nz, .up_location_loop\@
 
     ;restores the state
     pop bc
@@ -392,16 +404,13 @@ CheckUpMoveValidity:
     ;[hl] up by one pixel would result in a collision with a wall and sets 
     ;(a) equal to 0 otherwise
     push hl
-    ; byte index that they are in = (x / 8) * 4 + (y / 8)
-    ; bit in byte = x mod 8  ;; mod 8 by doing and %00000111
-    ; start with 10000000 and shift right by bit in byte times
-    ; then once shifted, and it with the byte
-
     ld de, OAMA_Y
     add hl, de
-    ld a, [rSCY] ;look at sprite y coordinate
-    dec a ;move entity up by 1 pixel
-    sub a, 16
+    ;look at sprite y coordinate:
+    ld a, [rSCY] 
+    ;move entity up by 1 pixel:
+    dec a
+    sub a, GLOBAL_Y_COORD_OFFSET
     add a, [hl]
     srl a
     srl a
@@ -409,7 +418,7 @@ CheckUpMoveValidity:
     ld b, a ;b is now the entity's row number if it moved up by 1
     inc hl 
     ld a, [rSCX] ;now look at sprite's x coordinate
-    sub a, 8
+    sub a, GLOBAL_X_COORD_OFFSET
     add a, [hl]
     srl a
     srl a
@@ -420,7 +429,7 @@ CheckUpMoveValidity:
     cp a, 0
     jp z, .done_getting_map_row_start_byte
     .get_map_row_start_byte
-        ld de, 4
+        ld de, WALL_BYTES_IN_MAP_ROW
         add hl, de
         dec a
         cp a, 0
@@ -439,29 +448,32 @@ CheckUpMoveValidity:
         jp nz, .get_map_column_start_byte
     .done_getting_map_column_byte
     ld a, c
-    and a, %00000111 ;a mod 8 = bit num (from the left) within byte
-    ld c, %10000000 ;bit checker
+    and a, MOD_8 
+    ;bit checker:
+    ld c, %10000000 
     cp a, 0
     jp z, .done_determining_bit_location_in_map_byte
-    .determine_bit_location_in_map_byte ;sets the bit location of the sprite within the byte equal to 1
+    ;sets the bit location of the sprite within the byte equal to 1
+    .determine_bit_location_in_map_byte 
         srl c
         dec a
         jp nz, .determine_bit_location_in_map_byte
     .done_determining_bit_location_in_map_byte
     ld a, [hl]
     pop hl
-    and a, c ;checking if there is a 1 at the bit location wher the sprite is in the map byte
-    ret
+    ;checking if there is a 1 at the bit location wher the sprite is in the map byte
+    and a, c 
+ret
 
 macro MoveEntityUp
     call CheckUpMoveValidity
-    jp nz, .no_movement_up
+    jp nz, .no_movement_up\@
     push hl
     ld de, sizeof_OAM_ATTRS
     add hl, de
     call CheckUpMoveValidity
     pop hl
-    jp nz, .no_movement_up
+    jp nz, .no_movement_up\@
 
     ;moves the entity with its top left sprite at memory address [hl] the argument's pixels up
     push bc
@@ -472,11 +484,11 @@ macro MoveEntityUp
     add hl, bc
     ld a, [hl]
     cp a, SPRITE_UP_MOVEMENT
-    jp c, .start_walking_up
+    jp c, .start_walking_up\@
     cp a, SPRITE_SIDE_MOVEMENT
-    jp nc, .start_walking_up
-    add 2
-    and %00001010
+    jp nc, .start_walking_up\@
+    add ENTITY_WALKING_ANIMATION_OFFSET
+    and KEEPS_SPRITE_AS_ONE_OF_TWO_VALID_WALKING_UP_SPRITES
     ld [hl], a
 
     ;sprite 1
@@ -485,7 +497,6 @@ macro MoveEntityUp
     add hl, bc
     ld [hl], a
     
-
     ;sprite 2
     add SPRITE_BOTTOM_LEFT_TILE_NUM - 1
     add hl, bc
@@ -496,9 +507,9 @@ macro MoveEntityUp
     add hl, bc
     ld [hl], a
 
-    jp .done_up
+    jp .done_up\@
 
-    .start_walking_up
+    .start_walking_up\@
         pop hl
         push hl
         ld bc, OAMA_TILEID
@@ -512,7 +523,7 @@ macro MoveEntityUp
         add hl, bc       
         copy_xor_movement [hl], SPRITE_UP_MOVEMENT + SPRITE_BOTTOM_LEFT_TILE_NUM + 1
 
-    .done_up
+    .done_up\@
         pop hl
         push hl
         ld bc, OAMA_FLAGS
@@ -527,7 +538,7 @@ macro MoveEntityUp
         copy_or_palette [hl], 0
     pop hl
     pop bc
-    .no_movement_up
+    .no_movement_up\@
 endm
 
 macro MoveEntityDownNoAnimation
@@ -538,7 +549,7 @@ macro MoveEntityDownNoAnimation
     add hl, bc
     ld a, 0
     ld bc, sizeof_OAM_ATTRS
-    .down_location_loop ;loop through, starting at the entity address + OAM_X, and jumping in memory by sizeof_OAM_ATTRS
+    .down_location_loop\@ ;loop through, starting at the entity address + OAM_X, and jumping in memory by sizeof_OAM_ATTRS
         push af
         ld a, [hl]
         add \1
@@ -547,7 +558,7 @@ macro MoveEntityDownNoAnimation
         pop af
         inc a
         cp a, NUM_SPRITES_IN_ENTITY 
-        jp nz, .down_location_loop
+        jp nz, .down_location_loop\@
 
     ;restores the state
     pop bc
@@ -559,36 +570,37 @@ CheckDownMoveValidity:
     ;[hl] up by one pixel would result in a collision with a wall and sets 
     ;(a) equal to 0 otherwise
     push hl
-    ; byte index that they are in = (x / 8) * 4 + (y / 8)
-    ; bit in byte = x mod 8  ;; mod 8 by doing and %00000111
-    ; start with 10000000 and shift right by bit in byte times
-    ; then once shifted, and it with the byte
-    ld de, (sizeof_OAM_ATTRS * 2)
+    ld de, (sizeof_OAM_ATTRS * NUM_SPRITES_MAKING_UP_ENTITY_SIDE)
     add hl, de
     ld de, OAMA_Y
     add hl, de
-    ld a, [rSCY] ;look at sprite y coordinate
-    add a, 9 ;move entity down by 1 tile
-    sub a, 16
+    ;look at sprite y coordinate:
+    ld a, [rSCY]
+    ;move entity down by 1 tile: 
+    add a, SPRITE_TILE_WIDTH + 1 
+    sub a, GLOBAL_Y_COORD_OFFSET
     add a, [hl]
     srl a
     srl a
     srl a 
-    ld b, a ;b is now the entity's row number if it moved up by 1
+    ld b, a 
+    ;b is now the entity's row number if it moved up by 1
     inc hl 
-    ld a, [rSCX] ;now look at sprite's x coordinate
-    sub a, 8
+    ;now look at sprite's x coordinate:
+    ld a, [rSCX] 
+    sub a, GLOBAL_X_COORD_OFFSET
     add a, [hl]
     srl a
     srl a
     srl a
-    ld c, a ;c is the column number
+    ;c is the column number:
+    ld c, a 
     ld a, b
     ld hl, MAP_WALL_STORAGE_START
     cp a, 0
     jp z, .done_getting_map_row_start_byte
     .get_map_row_start_byte
-        ld de, 4
+        ld de, WALL_BYTES_IN_MAP_ROW
         add hl, de
         dec a
         cp a, 0
@@ -607,29 +619,32 @@ CheckDownMoveValidity:
         jp nz, .get_map_column_start_byte
     .done_getting_map_column_byte
     ld a, c
-    and a, %00000111 ;a mod 8 = bit num (from the left) within byte
-    ld c, %10000000 ;bit checker
+    and a, MOD_8
+    ;bit checker:
+    ld c, %10000000 
     cp a, 0
     jp z, .done_determining_bit_location_in_map_byte
-    .determine_bit_location_in_map_byte ;sets the bit location of the sprite within the byte equal to 1
+    ;sets the bit location of the sprite within the byte equal to 1
+    .determine_bit_location_in_map_byte 
         srl c
         dec a
         jp nz, .determine_bit_location_in_map_byte
     .done_determining_bit_location_in_map_byte
     ld a, [hl]
     pop hl
-    and a, c ;checking if there is a 1 at the bit location wher the sprite is in the map byte
-    ret
+    ;checking if there is a 1 at the bit location wher the sprite is in the map byte
+    and a, c 
+ret
 
 macro MoveEntityDown
     call CheckDownMoveValidity
-    jp nz, .no_movement_down
+    jp nz, .no_movement_down\@
     push hl
     ld de, sizeof_OAM_ATTRS
     add hl, de
     call CheckDownMoveValidity
     pop hl
-    jp nz, .no_movement_down
+    jp nz, .no_movement_down\@
     ;moves the entity with its top left sprite at memory address [hl] [arg1] pixels down
     push bc
     MoveEntityDownNoAnimation \1
@@ -639,9 +654,9 @@ macro MoveEntityDown
     add hl, bc
     ld a, [hl]
     cp a, SPRITE_DOWN_MOVEMENT
-    jp c, .start_walking_down
-    add 2
-    and %00000010
+    jp c, .start_walking_down\@
+    add ENTITY_WALKING_ANIMATION_OFFSET
+    and KEEPS_SPRITE_AS_ONE_OF_TWO_VALID_WALKING_DOWN_SPRITES
     ld [hl], a
 
     ;sprite 1
@@ -660,9 +675,9 @@ macro MoveEntityDown
     add hl, bc
     ld [hl], a
 
-    jp .done_down
+    jp .done_down\@
 
-    .start_walking_down
+    .start_walking_down\@
         pop hl
         push hl
         ld bc, OAMA_TILEID
@@ -676,7 +691,7 @@ macro MoveEntityDown
         add hl, bc       
         copy_or_movement [hl], SPRITE_DOWN_MOVEMENT + SPRITE_BOTTOM_LEFT_TILE_NUM + 1
 
-    .done_down
+    .done_down\@
         pop hl
         push hl
         ld bc, OAMA_FLAGS
@@ -691,8 +706,5 @@ macro MoveEntityDown
         copy_or_palette [hl], 0
     pop hl
     pop bc
-    .no_movement_down
+    .no_movement_down\@
 endm
-
-
-

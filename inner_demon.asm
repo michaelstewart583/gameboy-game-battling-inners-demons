@@ -78,9 +78,9 @@ init_inner_demons:
         cp a, [hl]
         pop hl
         jp nz, .loop
-    ret
+ret
 
-macro calculate_inner_demon_movement_vector
+macro CalculateInnerDemonMovementVector
     ;returns the optimal vector (_, _) in (bc) for the inner demon 
     ;who is stored in OAM at address [hl] to get to inner
     push hl
@@ -93,21 +93,21 @@ macro calculate_inner_demon_movement_vector
     add hl, de
     ld a, [hl]
     sub a, b
-    jp z, .inner_x_is_inline_with_demon 
-    jp c, .inner_x_is_right_of_demon
-    jp .inner_x_left_of_demon
+    jp z, .inner_x_is_inline_with_demon\@
+    jp c, .inner_x_is_right_of_demon\@
+    jp .inner_x_left_of_demon\@
 
     ;determining x direction that inner demon should go
-    .inner_x_is_inline_with_demon
+    .inner_x_is_inline_with_demon\@
         ld b, 0
-        jp .done_x
-    .inner_x_is_right_of_demon
+        jp .done_x@
+    .inner_x_is_right_of_demon\@
         ld b, 1
-        jp .done_x
-    .inner_x_left_of_demon
+        jp .done_x@
+    .inner_x_left_of_demon\@
         ld b, -1
-        jp .done_x
-    .done_x
+        jp .done_x@
+    .done_x@
 
     pop hl
     push hl
@@ -121,21 +121,21 @@ macro calculate_inner_demon_movement_vector
     ld a, [hl] ;inner demon y coordinate
     sub a, b
     pop bc ;pop back off stack so we can store y move in c
-    jp z, .inner_y_is_inline_with_demon 
-    jp c, .inner_y_below_demon
-    jp .inner_y_is_above_demon
+    jp z, .inner_y_is_inline_with_demon\@
+    jp c, .inner_y_below_demon\@
+    jp .inner_y_is_above_demon\@
 
     ;determining x direction that inner demon should go
-    .inner_y_is_inline_with_demon
+    .inner_y_is_inline_with_demon\@
         ld c, 0
-        jp .done_y
-    .inner_y_below_demon
+        jp .done_y\@
+    .inner_y_below_demon\@
         ld c, 1
-        jp .done_y
-    .inner_y_is_above_demon
+        jp .done_y\@
+    .inner_y_is_above_demon\@
         ld c, -1
-        jp .done_y
-    .done_y
+        jp .done_y\@
+    .done_y\@
     pop hl
 endm
 
@@ -147,7 +147,7 @@ move_inner_demons:
     .loop
         push af
         push hl
-        calculate_inner_demon_movement_vector
+        CalculateInnerDemonMovementVector
 
         .x_movement
             ld a, b
@@ -195,4 +195,4 @@ move_inner_demons:
         pop hl
         jp nz, .loop
     .done
-    ret
+ret

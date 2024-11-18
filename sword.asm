@@ -13,39 +13,39 @@ macro SwingSword
 
     ld a, [FACING_DIRECTION]
     ;Moves the sword based on the current direction inner is facing
-    .poll_right
+    .poll_right\@
         ld a, [FACING_DIRECTION]
         and PADF_RIGHT
-        jp nz, .poll_left
-    .right
+        jp nz, .poll_left\@
+    .right\@
         ld a, [SWORD_SPRITE_ADDRESS + OAMA_X]
         add SPRITE_TILE_WIDTH * 2
         ld [SWORD_SPRITE_ADDRESS + OAMA_X], a
         copy [SWORD_SPRITE_ADDRESS + OAMA_FLAGS], OAMF_PAL0
-        jp .poll_up
-    .poll_left
+        jp .poll_up\@
+    .poll_left\@
         ld a, [FACING_DIRECTION]
         and PADF_LEFT
-        jp nz, .poll_up
-    .left
+        jp nz, .poll_up\@
+    .left\@
         ld a, [SWORD_SPRITE_ADDRESS + OAMA_X]
         sub SPRITE_TILE_WIDTH
         ld [SWORD_SPRITE_ADDRESS + OAMA_X], a
         copy [SWORD_SPRITE_ADDRESS + OAMA_FLAGS], OAMF_XFLIP | OAMF_PAL0
-    .poll_up
+    .poll_up\@
         ld a, [FACING_DIRECTION]
         and PADF_UP
-        jp nz, .poll_down
-    .up
+        jp nz, .poll_down\@
+    .up\@
         ld a, [SWORD_SPRITE_ADDRESS + OAMA_Y]
         sub SPRITE_TILE_WIDTH
         ld [SWORD_SPRITE_ADDRESS + OAMA_Y], a
         jp .done
-    .poll_down
+    .poll_down\@
         ld a, [FACING_DIRECTION]
         and PADF_DOWN
         jp nz, .done
-    .down
+    .down\@
         ld a, [SWORD_SPRITE_ADDRESS + OAMA_Y]
         add SPRITE_TILE_WIDTH * 2
         ld [SWORD_SPRITE_ADDRESS + OAMA_Y], a
@@ -57,17 +57,17 @@ macro CheckSwordHit
     ld hl, INNER_DEMONS_START_ADDRESS
     copy c, [NUM_INNER_DEMONS]
 
-    .loop
+    .loop\@
         push hl
         ;Check if sword is abover Inner Demon
         ld a, [hl]
         sub a, SPRITES_WIDTH
         cp a, b
-        jp nc, .done_check
+        jp nc, .done_check\@
         ;Checks if sword is below Inner Demon
         add a, SPRITES_WIDTH * 2
         cp a, b
-        jp c, .done_check
+        jp c, .done_check\@
         ;Check horizontal position
         copy b, [SWORD_SPRITE_ADDRESS + OAMA_X]
         ld de, OAMA_X
@@ -77,21 +77,21 @@ macro CheckSwordHit
         ld a, [hl]
         sub a, SPRITES_WIDTH
         cp a, b
-        jp nc, .done_check
+        jp nc, .done_check\@
         ;Checks if sword is to the left of Inner Demon
         add a, SPRITES_WIDTH * 2
         cp a, b
-        jp c, .done_check
+        jp c, .done_check\@
         pop hl
         jp .kill_inner_demon
 
-        .done_check
+        .done_check\@
         copy b, [SWORD_SPRITE_ADDRESS + OAMA_Y]
         pop hl
         ld de, ENTITY_SIZE
         add hl, de
         dec c
-        jp nz, .loop
+        jp nz, .loop\@
 endm
 
 init_sword:
@@ -101,7 +101,7 @@ init_sword:
     copy [SWORD_SPRITE_ADDRESS + OAMA_FLAGS], OAMF_PAL0
 
     copy [SWORDF], 0
-    ret
+ret
 
 update_sword:
     ;Check if sword is currently swinging
@@ -157,7 +157,6 @@ update_sword:
         sub a, e
         ld e, a
 
-
         ;Kills the inner demon that was hit by the sword by placing them at the respawn point
         .kill_loop
             push hl
@@ -192,4 +191,4 @@ update_sword:
         ;reset button polling
         ld a, P1F_GET_NONE
         ld [rP1], a
-        ret
+ret

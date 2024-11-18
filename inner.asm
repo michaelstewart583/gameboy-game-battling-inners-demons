@@ -37,8 +37,7 @@ init_inner:
     copy [INNER_SPRITE_3_ADDRESS + OAMA_FLAGS], OAMF_PAL0
 
     copy [FACING_DIRECTION], PADF_DOWN
-    ret
-
+ret
 
 update_inner:
     ;updates the location and sprite tiles of inner to 
@@ -92,4 +91,4 @@ update_inner:
     .done
     ld a, P1F_GET_NONE
     ld [rP1], a
-    ret
+ret

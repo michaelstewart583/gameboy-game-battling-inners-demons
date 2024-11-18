@@ -102,14 +102,14 @@ macro FixScreenLeft
     ld de, ENTITY_SIZE
     copy c, [NUM_INNER_DEMONS]
     inc c
-    .left_loop
+    .left_loop\@
         MoveEntityRightNoAnimation INNER_MOVEMENT_AMOUNT
         add hl, de
         dec c
-        jp nz, .left_loop
+        jp nz, .left_loop\@
 
     ld a, [rSCX]
-    sub 2
+    sub INNER_MOVEMENT_AMOUNT
     ld [SCREEN_X_RAM], a
 endm
 
@@ -118,14 +118,14 @@ macro FixScreenRight
     ld de, ENTITY_SIZE
     copy c, [NUM_INNER_DEMONS]
     inc c
-    .right_loop
+    .right_loop\@
         MoveEntityLeftNoAnimation INNER_MOVEMENT_AMOUNT
         add hl, de
         dec c
-        jp nz, .right_loop
+        jp nz, .right_loop\@
 
     ld a, [rSCX]
-    add 2
+    add INNER_MOVEMENT_AMOUNT
     ld [SCREEN_X_RAM], a
 endm
 
@@ -134,14 +134,14 @@ macro FixScreenUp
     ld de, ENTITY_SIZE
     copy c, [NUM_INNER_DEMONS]
     inc c
-    .up_loop
+    .up_loop\@
         MoveEntityDownNoAnimation INNER_MOVEMENT_AMOUNT
         add hl, de
         dec c
-        jp nz, .up_loop
+        jp nz, .up_loop\@
 
     ld a, [SCREEN_Y_RAM]
-    sub 2
+    sub INNER_MOVEMENT_AMOUNT
     ld [SCREEN_Y_RAM], a
 endm
 
@@ -150,14 +150,14 @@ macro FixScreenBottom
     ld de, ENTITY_SIZE
     copy c, [NUM_INNER_DEMONS]
     inc c
-    .bottom_loop
+    .bottom_loop\@
         MoveEntityUpNoAnimation INNER_MOVEMENT_AMOUNT
         add hl, de
         dec c
-        jp nz, .bottom_loop
+        jp nz, .bottom_loop\@
 
     ld a, [SCREEN_Y_RAM]
-    add 2
+    add INNER_MOVEMENT_AMOUNT
     ld [SCREEN_Y_RAM], a
 endm
 
@@ -177,14 +177,14 @@ section "background_processes", rom0
 macro ScrollHudPositionUpOneTile
     push bc
     push af
-    ld c, 8
-    .scroll
+    ld c, PRINT_BOX_LINE_HEIGHT
+    .scroll\@
         halt
         ld a, [rWY]
         dec a
         ld [rWY], a
         dec c
-        jp nz, .scroll
+        jp nz, .scroll\@
     pop af
     pop bc
 endm
@@ -222,14 +222,14 @@ print_text:
     pop af
     pop bc
     pop hl
-    ret
+ret
 
 init_start_screen:
     ; init the palettes
-    ld a, %11100100
+    ld a, BACKGROUND_AND_INNER_PALETTE
     ld [rBGP], a
     ld [rOBP0], a
-    ld a, %00011011
+    ld a, INNER_DEMON_PALETTE
     ld [rOBP1], a
 
     ; init graphics data
@@ -245,13 +245,13 @@ init_start_screen:
     ei
 
     ; place the window at the bottom of the LCD
-    ld a, 7
+    ld a, WINDOW_X_COORD
     ld [rWX], a
-    ld a, 144
+    ld a, START_SCREEN_INITIAL_WINDOW_Y_COORD
     ld [rWY], a
 
-    copy [rSCX], 0
-    copy [rSCY], 0
+    copy [rSCX], START_SCREEN_POS_X_COORD
+    copy [rSCY], START_SCREEN_POS_Y_COORD
 
     copy [INNER_X_POSITION], LEVEL_1_X_POSITION
     copy [INNER_Y_POSITION], LEVEL_1_Y_POSITION
@@ -286,14 +286,14 @@ init_start_screen:
         jp .done
 
     .done
-    ret
+ret
 
 init_level_1:
     ; init the palettes
-    ld a, %11100100
+    ld a, BACKGROUND_AND_INNER_PALETTE
     ld [rBGP], a
     ld [rOBP0], a
-    ld a, %00011011
+    ld a, INNER_DEMON_PALETTE
     ld [rOBP1], a
 
     copy [LEVEL_FLAGS], ON_LEVEL_1
@@ -309,13 +309,13 @@ init_level_1:
     ei
 
     ; place the window at the bottom of the LCD
-    ld a, 7
+    ld a, WINDOW_X_COORD
     ld [rWX], a
-    ld a, 120
+    ld a, GAME_LEVEL_WINDOW_Y_COORD
     ld [rWY], a
 
-    copy [rSCX], 0
-    copy [rSCY], 50
+    copy [rSCX], GAME_LEVEL_SCREEN_POS_X_COORD
+    copy [rSCY], GAME_LEVEL_SCREEN_POS_Y_COORD
 
     copy [INNER_X_POSITION], LEVEL_2_X_POSITION
     copy [INNER_Y_POSITION], LEVEL_2_Y_POSITION
@@ -326,14 +326,14 @@ init_level_1:
     ; set the graphics parameters and turn back LCD on
     ld a, LCDCF_ON | LCDCF_WIN9C00 | LCDCF_BG8800 | LCDCF_BG9800 | LCDCF_OBJON | LCDCF_OBJ8 | LCDCF_BGON
     ld [rLCDC], a
-    ret
+ret
 
 init_level_2:
     ; init the palettes
-    ld a, %11100100
+    ld a, BACKGROUND_AND_INNER_PALETTE
     ld [rBGP], a
     ld [rOBP0], a
-    ld a, %00011011
+    ld a, INNER_DEMON_PALETTE
     ld [rOBP1], a
 
     copy [LEVEL_FLAGS], ON_LEVEL_2
@@ -350,13 +350,13 @@ init_level_2:
     ei
 
     ; place the window at the bottom of the LCD
-    ld a, 7
+    ld a, WINDOW_X_COORD
     ld [rWX], a
-    ld a, 120
+    ld a, GAME_LEVEL_WINDOW_Y_COORD
     ld [rWY], a
 
-    copy [rSCX], 0
-    copy [rSCY], 50
+    copy [rSCX], GAME_LEVEL_SCREEN_POS_X_COORD
+    copy [rSCY], GAME_LEVEL_SCREEN_POS_Y_COORD
 
     copy [INNER_X_POSITION], LEVEL_3_X_POSITION
     copy [INNER_Y_POSITION], LEVEL_3_Y_POSITION
@@ -367,15 +367,14 @@ init_level_2:
     ; set the graphics parameters and turn back LCD on
     ld a, LCDCF_ON | LCDCF_WIN9C00 | LCDCF_BG8800 | LCDCF_BG9800 | LCDCF_OBJON | LCDCF_OBJ8 | LCDCF_BGON
     ld [rLCDC], a
-
-    ret
+ret
 
 init_level_3:
-        ; init the palettes
-    ld a, %11100100
+    ; init the palettes
+    ld a, BACKGROUND_AND_INNER_PALETTE
     ld [rBGP], a
     ld [rOBP0], a
-    ld a, %00011011
+    ld a, INNER_DEMON_PALETTE
     ld [rOBP1], a
 
     copy [LEVEL_FLAGS], ON_LEVEL_3
@@ -391,13 +390,13 @@ init_level_3:
     ei
 
     ; place the window at the bottom of the LCD
-    ld a, 7
+    ld a, WINDOW_X_COORD
     ld [rWX], a
-    ld a, 120
+    ld a, GAME_LEVEL_WINDOW_Y_COORD
     ld [rWY], a
 
-    copy [rSCX], 0
-    copy [rSCY], 50
+    copy [rSCX], GAME_LEVEL_SCREEN_POS_X_COORD
+    copy [rSCY], GAME_LEVEL_SCREEN_POS_Y_COORD
     
     copy [SCREEN_X_RAM], [rSCX]
     copy [SCREEN_Y_RAM], [rSCY]
@@ -405,14 +404,12 @@ init_level_3:
     ; set the graphics parameters and turn back LCD on
     ld a, LCDCF_ON | LCDCF_WIN9C00 | LCDCF_BG8800 | LCDCF_BG9800 | LCDCF_OBJON | LCDCF_OBJ8 | LCDCF_BGON
     ld [rLCDC], a
-
-    ret
-
+ret
 
 move_screen:
     ld a, [IS_WALKING]
-    and %00001111
-    xor %00001111
+    and IS_DPAD
+    xor IS_DPAD
     jp z, .done
     ld a, [INNER_SPRITE_0_ADDRESS + OAMA_X]
     cp a, LEFT_SIDE_OF_SCREEN
@@ -428,7 +425,7 @@ move_screen:
         jp .check_up_down
         .fix_screen_left
             ld a, [SCREEN_X_RAM]
-            cp a, 2
+            cp a, X_COORD_LEFT_SIDE_OF_SCREEN_WRAP_AROUND_PREVENTION
             jp c, .check_up_down
             FixScreenLeft
             jp .check_up_down
@@ -439,7 +436,7 @@ move_screen:
         jp .check_up_down
         .fix_screen_right
             ld a, [SCREEN_X_RAM]
-            cp a, 93
+            cp a, X_COORD_RIGHT_SIDE_OF_SCREEN_WRAP_AROUND_PREVENTION
             jp nc, .check_up_down
             FixScreenRight
 
@@ -458,7 +455,7 @@ move_screen:
         jp .done
         .fix_screen_up
             ld a, [SCREEN_Y_RAM]
-            cp a, 2
+            cp a, Y_COORD_TOP_OF_SCREEN_WRAP_AROUND_PREVENTION
             jp c, .done
             FixScreenUp
             jp .done
@@ -470,12 +467,12 @@ move_screen:
         jp .done
         .fix_screen_bottom
             ld a, [SCREEN_Y_RAM]
-            cp a, 113
+            cp a, Y_COORD_BOTTOM_OF_SCREEN_WRAP_AROUND_PREVENTION
             jp nc, .done
             FixScreenBottom
 
     .done
-    ret
+ret
 
 ;Detects if you beat a level, and what level/start screen to send you to
 update_game_state:
@@ -494,24 +491,24 @@ update_game_state:
         jp nz, start_level_3
         jp restart_game
     .done
-    ret
+ret
 
 macro CheckCollisionNotRight
     copy b, [INNER_SPRITE_0_ADDRESS + OAMA_Y]
     ld hl, INNER_DEMONS_START_ADDRESS + OAMA_Y
     copy c, [NUM_INNER_DEMONS]
 
-    .loop_not_right
+    .loop_not_right\@
         push hl
         ;Check if Inner is abover Inner Demon
         ld a, [hl]
         sub a, SPRITES_WIDTH
         cp a, b
-        jp nc, .done_check_not_right
+        jp nc, .done_check_not_right\@
         ;Checks if Inner is below Inner Demon
-        add a, SPRITES_WIDTH * 2
+        add a, SPRITES_WIDTH * NUM_SPRITES_MAKING_UP_ENTITY_SIDE
         cp a, b
-        jp c, .done_check_not_right
+        jp c, .done_check_not_right\@
         ;Check horizontal position
         copy b, [INNER_SPRITE_0_ADDRESS + OAMA_X]
         ld de, OAMA_X
@@ -521,21 +518,21 @@ macro CheckCollisionNotRight
         ld a, [hl]
         sub a, SPRITES_WIDTH
         cp a, b
-        jp nc, .done_check_not_right
+        jp nc, .done_check_not_right\@
         ;Checks if Inner is to the left of Inner Demon
-        add a, SPRITES_WIDTH * 2
+        add a, SPRITES_WIDTH * NUM_SPRITES_MAKING_UP_ENTITY_SIDE
         cp a, b
-        jp c, .done_check_not_right
+        jp c, .done_check_not_right\@
 
         jp .lost_game
 
-        .done_check_not_right
+        .done_check_not_right\@
         copy b, [INNER_SPRITE_0_ADDRESS + OAMA_Y]
         pop hl
         ld de, ENTITY_SIZE
         add hl, de
         dec c
-        jp nz, .loop_not_right
+        jp nz, .loop_not_right\@
 endm
 
 macro CheckCollisionRight
@@ -543,17 +540,17 @@ macro CheckCollisionRight
     ld hl, INNER_DEMONS_START_ADDRESS + sizeof_OAM_ATTRS + OAMA_Y
     copy c, [NUM_INNER_DEMONS]
 
-    .loop_right
+    .loop_right\@
         push hl
         ;Check if Inner is abover Inner Demon
         ld a, [hl]
         sub a, SPRITES_WIDTH
         cp a, b
-        jp nc, .done_check_right
+        jp nc, .done_check_right\@
         ;Checks if Inner is below Inner Demon
-        add a, SPRITES_WIDTH * 2
+        add a, SPRITES_WIDTH * NUM_SPRITES_MAKING_UP_ENTITY_SIDE
         cp a, b
-        jp c, .done_check_right
+        jp c, .done_check_right\@
         ;Check horizontal position
         copy b, [INNER_SPRITE_1_ADDRESS + OAMA_X]
         ld de, OAMA_X
@@ -563,21 +560,21 @@ macro CheckCollisionRight
         ld a, [hl]
         sub a, SPRITES_WIDTH
         cp a, b
-        jp nc, .done_check_right
+        jp nc, .done_check_right\@
         ;Checks if Inner is to the left of Inner Demon
-        add a, SPRITES_WIDTH * 2
+        add a, SPRITES_WIDTH * NUM_SPRITES_MAKING_UP_ENTITY_SIDE
         cp a, b
-        jp c, .done_check_right
+        jp c, .done_check_right\@
 
         jp .lost_game
 
-        .done_check_right
+        .done_check_right\@
         copy b, [INNER_SPRITE_1_ADDRESS + OAMA_Y]
         pop hl
         ld de, ENTITY_SIZE
         add hl, de
         dec c
-        jp nz, .loop_right
+        jp nz, .loop_right\@
 endm
 
 ;Checks if Inner Collides with an Inner Demon
@@ -596,7 +593,7 @@ handle_interaction:
         pop hl
         jp restart_game
     .done
-    ret
+ret
 
 check_for_start:
     copy [rP1], P1F_GET_BTN
@@ -610,7 +607,7 @@ check_for_start:
     ;poll
     ld a, [rP1]
     and PADF_START
-    ret
+ret
 
 update_visuals:
     ld hl, SWORD_SPRITE_ADDRESS_OAM
@@ -627,7 +624,7 @@ update_visuals:
     copy [rSCY], [SCREEN_Y_RAM]
 
     .done
-    ret
+ret
     
 YOU_WIN_TEXT_LOCATION:
     db "YOU WIN\0"
