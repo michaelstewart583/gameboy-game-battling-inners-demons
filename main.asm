@@ -15,7 +15,7 @@ include "background_processes.asm"
 section "header", rom0[$0100]
 entrypoint:
     di
-    jp main
+    jr main
     ds ($0150 - @), 0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -32,7 +32,7 @@ macro DisableLCD
     ld [rLCDC], a
 endm
 
-section "main", rom0
+section "main", rom0[$0150]
 
 main:
     copy [LEVEL_FLAGS], 0
